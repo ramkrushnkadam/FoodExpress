@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 
 // Other pages load only when their route is opened
 const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Restaurant = lazy(() => import("./pages/Restaurant"));
 const FoodDetails = lazy(() => import("./pages/FoodDetails"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -78,6 +79,20 @@ function App() {
           <Route
             path="/login"
             element={<Auth />}
+          />
+          <Route
+            path="/register"
+            element={<Auth />}
+          />
+
+          {/* Reset Password */}
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword />}
+          />
+          <Route
+            path="/reset-password"
+            element={<ResetPassword />}
           />
 
           {/* Restaurants */}

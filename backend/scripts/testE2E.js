@@ -1,4 +1,4 @@
-﻿const path = require("path");
+const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 const mongoose = require("mongoose");
 const http = require("http");
@@ -44,12 +44,14 @@ async function runE2E() {
     }
 
     const timestamp = Date.now();
-    const customerEmail = `customer_${timestamp}@test.com`;
+    const customerEmail = `customer_${timestamp}@gmail.com`;
     const customerPassword = "CustomerPass@123";
     let customerToken = null;
     let customerId = null;
     let adminToken = null;
     let createdOrderId = null;
+
+    const customerMobile = `9${Math.floor(100000000 + Math.random() * 900000000)}`;
 
     console.log("3. Testing Customer Registration & Login...");
     const regRes = await request("/auth/register", {
@@ -58,7 +60,7 @@ async function runE2E() {
             name: "John Doe",
             email: customerEmail,
             password: customerPassword,
-            mobile: "9876543210",
+            mobile: customerMobile,
             address: "123 Food Street, Cityville"
         })
     });

@@ -85,7 +85,7 @@ function FoodCard({ food }) {
               left-3
             "
           >
-            {food.type === "veg" ? (
+            {food.isVeg === true || food.type === "veg" ? (
               <span
                 className="
                   inline-flex

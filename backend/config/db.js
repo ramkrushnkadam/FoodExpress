@@ -3,7 +3,10 @@ const dns = require("node:dns");
 
 // Fallback to public DNS in case SRV URI strings are used on restrictive networks
 try {
-    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+    if (dns.setDefaultResultOrder) {
+        dns.setDefaultResultOrder("ipv4first");
+    }
+    dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
 } catch (dnsErr) {
     // Ignore if not supported
 }
