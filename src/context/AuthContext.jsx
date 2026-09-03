@@ -160,6 +160,75 @@ export function AuthProvider({ children }) {
     };
 
     // ==========================================
+    // FORGOT PASSWORD
+    // ==========================================
+
+    const forgotPassword = async (email) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email ? email.trim().toLowerCase() : "" })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                return {
+                    success: false,
+                    message: result.message || "Failed to process forgot password request"
+                };
+            }
+
+            return {
+                success: true,
+                message: result.message || "Password reset link sent",
+                resetUrl: result.resetUrl
+            };
+        } catch (error) {
+            console.error("Forgot password error:", error);
+            return {
+                success: false,
+                message: "Unable to connect to server"
+            };
+        }
+    };
+
+    // ==========================================
+    // RESET PASSWORD
+    // ==========================================
+
+    const resetPassword = async (token, password, confirmPassword) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/reset-password/${token}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, password, confirmPassword })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                return {
+                    success: false,
+                    message: result.message || "Failed to reset password"
+                };
+            }
+
+            return {
+                success: true,
+                message: result.message || "Password reset successfully"
+            };
+        } catch (error) {
+            console.error("Reset password error:", error);
+            return {
+                success: false,
+                message: "Unable to connect to server"
+            };
+        }
+    };
+
+    // ==========================================
     // AUTHENTICATED API REQUEST HELPER
     // ==========================================
 
@@ -186,6 +255,8 @@ export function AuthProvider({ children }) {
                 login,
                 logout,
                 updateProfile,
+                forgotPassword,
+                resetPassword,
                 authFetch
             }}
         >
