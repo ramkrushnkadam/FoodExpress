@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { apiRequest, CUSTOMER_TOKEN_KEY } from "../services/api";
 
-function Orders() {
+function Orders() { 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
