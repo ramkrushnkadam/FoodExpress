@@ -22,7 +22,7 @@ function Home() {
     // Copy original foods
     let filteredFoods = [...foods];
 
-    // -------------------------
+    // -------------------------   
     // Search Filter
     // -------------------------
     if (search.trim()) {
@@ -188,7 +188,7 @@ function Home() {
 
                     <div className="flex flex-wrap gap-3">
                         {/* All Button */}
-                        <button
+                        <button 
                             onClick={() => setFilter("all")}
                             className={`px-5 py-2 rounded-lg text-sm font-semibold transition ${
                                 filter === "all"

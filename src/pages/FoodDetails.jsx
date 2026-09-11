@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { useCart } from "../context/CartContext";
+import { useCart } from "../context/CartContext"; 
 import { useToast } from "../context/ToastContext";
 import { getFood } from "../services/catalogApi";
 
