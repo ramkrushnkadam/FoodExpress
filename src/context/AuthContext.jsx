@@ -23,21 +23,87 @@ export function AuthProvider({ children }) {
     });
 
     // Refresh profile from backend if token exists
-    useEffect(() => {
-        if (token) {
-            fetch(`${API_URL}/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then((res) => (res.ok ? res.json() : null))
-                .then((data) => {
-                    if (data?.user) {
-                        setUser(data.user);
-                        localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(data.user));
-                    }
-                })
-                .catch(() => {});
+   // ==========================================
+// CHECK JWT EXPIRATION
+// ==========================================
+
+useEffect(() => {
+    if (!token) return;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        const expiryTime = payload.exp * 1000;
+        const remainingTime = expiryTime - Date.now();
+
+        // Token is already expired
+        if (remainingTime <= 0) {
+            localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_USER_KEY);
+            setToken(null);
+            setUser(null);
+            window.location.href = "/login";
+            return;
         }
-    }, [token]);
+
+        // Automatically logout when JWT expires
+        const timer = setTimeout(() => {
+            localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_USER_KEY);
+            setToken(null);
+            setUser(null);
+            window.location.href = "/login";
+        }, remainingTime);
+
+        return () => clearTimeout(timer);
+
+    } catch (error) {
+        console.error("Invalid JWT:", error);
+
+        localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+        localStorage.removeItem(CUSTOMER_USER_KEY);
+        setToken(null);
+        setUser(null);
+        window.location.href = "/login";
+    }
+}, [token]);
+
+
+// ==========================================
+// REFRESH PROFILE FROM BACKEND
+// ==========================================
+
+useEffect(() => {
+    if (!token) return;
+
+    fetch(`${API_URL}/auth/me`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+        .then(async (res) => {
+            if (res.status === 401) {
+                localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+                localStorage.removeItem(CUSTOMER_USER_KEY);
+                setToken(null);
+                setUser(null);
+                window.location.href = "/login";
+                return null;
+            }
+
+            return res.ok ? res.json() : null;
+        })
+        .then((data) => {
+            if (data?.user) {
+                setUser(data.user);
+                localStorage.setItem(
+                    CUSTOMER_USER_KEY,
+                    JSON.stringify(data.user)
+                );
+            }
+        })
+        .catch(() => {});
+}, [token]);
 
     // ==========================================
     // REGISTER

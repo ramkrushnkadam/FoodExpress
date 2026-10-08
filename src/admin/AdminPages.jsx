@@ -113,7 +113,7 @@ export function AdminOrders() {
                     <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} placeholder="Customer or mobile" className="rounded-lg border px-3 py-2" />
                     <button onClick={load} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Search</button>
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border px-3">
-                        <option value="">All statuses</option>
+                        <option value="">All</option>
                         {STATUS_LIST.map((x) => <option key={x}>{x}</option>)}
                     </select>
                 </div>
