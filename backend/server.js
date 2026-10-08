@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const catalogRoutes = require("./routes/catalogRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", catalogRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // ==========================================
 // Test Route

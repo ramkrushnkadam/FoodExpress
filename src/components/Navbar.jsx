@@ -111,6 +111,14 @@ function Navbar() {
                     </NavLink>
 
 
+                    <NavLink
+                        to="/feedback"
+                        className={navClass}
+                    >
+                        Feedback & Reviews
+                    </NavLink>
+
+
                     {/* Cart */}
 
                     <Link
@@ -311,6 +319,15 @@ function Navbar() {
                         className={navClass}
                     >
                         📦 Orders
+                    </NavLink>
+
+
+                    <NavLink
+                        to="/feedback"
+                        onClick={closeMenu}
+                        className={navClass}
+                    >
+                        ⭐ Feedback & Reviews
                     </NavLink>
 
 

@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FoodCard from "../components/FoodCard";
 import SearchBar from "../components/SearchBar";
 import hero from "../assets/hero.jpg";
 import { getFoods } from "../services/catalogApi";
+import { apiRequest } from "../services/api";
 
 function Home() {
     const [filter, setFilter] = useState("all");
@@ -12,11 +13,26 @@ function Home() {
     const [search, setSearch] = useState("");
     const [foods, setFoods] = useState([]);
     const [catalogError, setCatalogError] = useState("");
+    const [publicReviews, setPublicReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
 
     useEffect(() => {
         getFoods()
             .then(setFoods)
             .catch((error) => setCatalogError(error.message || "Unable to load the menu."));
+
+        apiRequest("/reviews/public")
+            .then((data) => {
+                if (Array.isArray(data.reviews)) {
+                    setPublicReviews(data.reviews);
+                }
+            })
+            .catch((error) => {
+                console.error("Public reviews fetch error:", error);
+            })
+            .finally(() => {
+                setReviewsLoading(false);
+            });
     }, []);
 
     // Copy original foods
@@ -385,6 +401,91 @@ function Home() {
                         </div>
                     ))}
                 </div>
+            </section>
+
+            {/* =========================
+                CUSTOMER REVIEWS SECTION
+            ========================== */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-gray-100 dark:border-gray-800">
+                <div className="text-center max-w-2xl mx-auto mb-12">
+                    <div className="inline-flex items-center gap-2 bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+                        ⭐ Real FoodExpress Reviews
+                    </div>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+                        What Our Customers Say
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 mt-3 text-base">
+                        See what FoodExpress customers are saying about their experience.
+                    </p>
+                </div>
+
+                {reviewsLoading ? (
+                    <div className="py-12 text-center">
+                        <div className="text-4xl animate-pulse mb-3">⭐</div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loading customer reviews...</p>
+                    </div>
+                ) : publicReviews.length === 0 ? (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-10 text-center max-w-md mx-auto">
+                        <div className="text-4xl mb-3">🌟</div>
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+                            Be the first to share your FoodExpress experience!
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+                            Order delicious dishes from your favourite restaurants and share your feedback.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {publicReviews.map((rev) => (
+                            <div
+                                key={rev.id}
+                                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700 p-6 flex flex-col justify-between"
+                            >
+                                <div>
+                                    {/* Star Rating */}
+                                    <div className="flex items-center gap-1 text-amber-400 text-lg mb-4">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <span key={star}>
+                                                {star <= rev.rating ? "★" : "☆"}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    {/* Comment if provided */}
+                                    {rev.comment && rev.comment.trim() ? (
+                                        <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed italic mb-6">
+                                            "{rev.comment}"
+                                        </p>
+                                    ) : (
+                                        <p className="text-gray-400 dark:text-gray-500 text-xs italic mb-6">
+                                            Rated {rev.rating} out of 5 stars
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="pt-4 border-t border-gray-100 dark:border-gray-700/80 flex items-end justify-between gap-3">
+                                    <div>
+                                        <p className="font-bold text-gray-900 dark:text-white text-sm">
+                                            — {rev.customerDisplayName}
+                                        </p>
+                                        <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-0.5">
+                                            {rev.restaurantName}
+                                        </p>
+                                    </div>
+                                    <span className="text-[11px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                        {rev.createdAt
+                                            ? new Date(rev.createdAt).toLocaleDateString("en-IN", {
+                                                  day: "2-digit",
+                                                  month: "short",
+                                                  year: "numeric"
+                                              })
+                                            : ""}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* =========================

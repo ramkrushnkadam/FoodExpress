@@ -18,6 +18,7 @@ const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Orders = lazy(() => import("./pages/Orders"));
+const Feedback = lazy(() => import("./pages/Feedback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const AdminLogin = lazy(() => import("./admin/AdminLogin"));
@@ -135,6 +136,12 @@ function App() {
           <Route
             path="/orders"
             element={<Orders />}
+          />
+
+          {/* Feedback & Reviews */}
+          <Route
+            path="/feedback"
+            element={<Feedback />}
           />
 
           {/* Admin (server-verified role protection) */}
