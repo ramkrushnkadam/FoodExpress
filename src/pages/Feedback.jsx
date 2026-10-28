@@ -2,7 +2,7 @@ import { useEffect, useState, useId } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { apiRequest, CUSTOMER_TOKEN_KEY } from "../services/api";
+import { apiRequest, getBackendAssetUrl, CUSTOMER_TOKEN_KEY } from "../services/api";
 import { useToast } from "../context/ToastContext";
 
 function Feedback() {
@@ -14,15 +14,54 @@ function Feedback() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Filter State for My Reviews
+    const [filterType, setFilterType] = useState("all"); // "all" | "date_range" | "month"
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [month, setMonth] = useState(String(new Date().getMonth() + 1));
+    const [year, setYear] = useState(String(new Date().getFullYear()));
+    const [filterError, setFilterError] = useState("");
+    const [isFiltered, setIsFiltered] = useState(false);
+    const [filterLoading, setFilterLoading] = useState(false);
+
     // Modal / Active Review Form State
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState("");
+    const [selectedImages, setSelectedImages] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState("");
 
+    // Full-size image preview modal
+    const [previewImage, setPreviewImage] = useState(null);
+
     const token = localStorage.getItem(CUSTOMER_TOKEN_KEY);
+
+    const fetchMyReviews = async (params = {}) => {
+        try {
+            setFilterLoading(true);
+            const qs = new URLSearchParams();
+            if (params.filterType && params.filterType !== "all") {
+                qs.append("filterType", params.filterType);
+                if (params.filterType === "date_range") {
+                    if (params.startDate) qs.append("startDate", params.startDate);
+                    if (params.endDate) qs.append("endDate", params.endDate);
+                } else if (params.filterType === "month") {
+                    if (params.month) qs.append("month", params.month);
+                    if (params.year) qs.append("year", params.year);
+                }
+            }
+            const queryStr = qs.toString() ? `?${qs.toString()}` : "";
+            const reviewsRes = await apiRequest(`/reviews/my-reviews${queryStr}`);
+            setMyReviews(Array.isArray(reviewsRes.reviews) ? reviewsRes.reviews : []);
+        } catch (err) {
+            console.error("Filter reviews error:", err);
+            showToast(err.message || "Failed to load filtered reviews", "error");
+        } finally {
+            setFilterLoading(false);
+        }
+    };
 
     const fetchData = async () => {
         if (!token) {
@@ -49,11 +88,46 @@ function Feedback() {
         fetchData();
     }, [token]);
 
+    const handleApplyFilter = async () => {
+        setFilterError("");
+        if (filterType === "date_range") {
+            if (!startDate || !endDate) {
+                setFilterError("Please select both start date and end date.");
+                return;
+            }
+            if (new Date(startDate) > new Date(endDate)) {
+                setFilterError("Start date cannot be after end date.");
+                return;
+            }
+            setIsFiltered(true);
+            await fetchMyReviews({ filterType: "date_range", startDate, endDate });
+        } else if (filterType === "month") {
+            if (!month || !year) {
+                setFilterError("Please select both month and year.");
+                return;
+            }
+            setIsFiltered(true);
+            await fetchMyReviews({ filterType: "month", month, year });
+        } else {
+            handleClearFilter();
+        }
+    };
+
+    const handleClearFilter = async () => {
+        setFilterType("all");
+        setStartDate("");
+        setEndDate("");
+        setFilterError("");
+        setIsFiltered(false);
+        await fetchMyReviews({ filterType: "all" });
+    };
+
     const openReviewModal = (order) => {
         setSelectedOrder(order);
         setRating(0);
         setHoverRating(0);
         setComment("");
+        setSelectedImages([]);
         setFormError("");
     };
 
@@ -62,7 +136,63 @@ function Feedback() {
         setRating(0);
         setHoverRating(0);
         setComment("");
+        setSelectedImages([]);
         setFormError("");
+    };
+
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+
+        setFormError("");
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+
+        const remainingSlots = 3 - selectedImages.length;
+        if (remainingSlots <= 0) {
+            setFormError("You can upload a maximum of 3 images.");
+            return;
+        }
+
+        const validNewImages = [];
+        for (const file of files.slice(0, remainingSlots)) {
+            const ext = file.name.split(".").pop().toLowerCase();
+            const isAllowedExt = ["jpg", "jpeg", "png", "webp"].includes(ext);
+
+            if (!allowedTypes.includes(file.type) && !isAllowedExt) {
+                setFormError("Only JPG, JPEG, PNG, and WebP images are allowed.");
+                return;
+            }
+            if (file.size > maxSizeBytes) {
+                setFormError(`"${file.name}" exceeds the 5MB file size limit.`);
+                return;
+            }
+
+            validNewImages.push({
+                file,
+                preview: URL.createObjectURL(file)
+            });
+        }
+
+        setSelectedImages((prev) => [...prev, ...validNewImages]);
+        e.target.value = "";
+    };
+
+    const removeImage = (indexToRemove) => {
+        setSelectedImages((prev) => {
+            const item = prev[indexToRemove];
+            if (item?.preview) URL.revokeObjectURL(item.preview);
+            return prev.filter((_, idx) => idx !== indexToRemove);
+        });
+    };
+
+    const readFileAsBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
     };
 
     const handleSubmitReview = async (e) => {
@@ -78,12 +208,29 @@ function Feedback() {
             setSubmitting(true);
             setFormError("");
 
+            // Upload photos if any
+            const uploadedUrls = [];
+            for (const imgItem of selectedImages) {
+                const b64 = await readFileAsBase64(imgItem.file);
+                const uploadRes = await apiRequest("/reviews/upload", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        image: b64,
+                        filename: imgItem.file.name
+                    })
+                });
+                if (uploadRes?.url) {
+                    uploadedUrls.push(uploadRes.url);
+                }
+            }
+
             await apiRequest("/reviews", {
                 method: "POST",
                 body: JSON.stringify({
                     orderId: selectedOrder._id,
                     rating,
-                    comment: comment.trim()
+                    comment: comment.trim(),
+                    images: uploadedUrls
                 })
             });
 
@@ -155,48 +302,50 @@ function Feedback() {
         );
     }
 
+    // -------------------------------------------------------------
+    // Logged In View
+    // -------------------------------------------------------------
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-between">
             <Navbar />
 
-            <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                {/* Header */}
-                <div className="mb-10">
-                    <div className="flex items-center gap-3">
-                        <span className="text-3xl">⭐</span>
-                        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                            Feedback & Reviews
-                        </h1>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2 text-base">
-                        Rate your recent delivered meals and manage the reviews you've shared with FoodExpress.
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+                {/* Page Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                        Feedback & Reviews
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        Rate your recent delivered orders and share your experience with the FoodExpress community.
                     </p>
                 </div>
 
                 {error && (
-                    <div className="mb-8 p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+                    <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
                         {error}
                     </div>
                 )}
 
                 {loading ? (
                     <div className="py-20 text-center">
-                        <div className="text-5xl animate-bounce mb-3">🍽️</div>
-                        <p className="text-gray-600 dark:text-gray-300 font-semibold">Loading your orders & reviews...</p>
+                        <div className="text-5xl animate-pulse mb-3">⭐</div>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">
+                            Loading your orders and reviews...
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-12">
                         {/* ======================================================== */}
-                        {/* SECTION 1: ORDERS AVAILABLE FOR REVIEW                   */}
+                        {/* SECTION 1: ORDERS ELIGIBLE FOR REVIEW                    */}
                         {/* ======================================================== */}
                         <section>
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-4">
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        Orders Available for Review
+                                        Orders Waiting for Review
                                     </h2>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        Only delivered or completed orders are eligible for customer feedback.
+                                        Only delivered or completed orders can be reviewed.
                                     </p>
                                 </div>
                                 <span className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full">
@@ -287,7 +436,7 @@ function Feedback() {
                                                 ) : (
                                                     <button
                                                         onClick={() => openReviewModal(order)}
-                                                        className="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-2"
+                                                        className="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
                                                     >
                                                         <span>⭐</span>
                                                         <span>Rate & Review</span>
@@ -301,10 +450,10 @@ function Feedback() {
                         </section>
 
                         {/* ======================================================== */}
-                        {/* SECTION 2: MY REVIEWS                                    */}
+                        {/* SECTION 2: MY REVIEWS WITH DATE & MONTH FILTERS           */}
                         {/* ======================================================== */}
                         <section className="pt-4">
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                                         My Reviews
@@ -313,20 +462,201 @@ function Feedback() {
                                         Reviews you have submitted for past FoodExpress orders.
                                     </p>
                                 </div>
-                                <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold px-3 py-1 rounded-full">
-                                    {myReviews.length} total
+                                <span className="self-start md:self-auto bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold px-3 py-1 rounded-full">
+                                    {myReviews.length} {isFiltered ? "filtered" : "total"}
                                 </span>
                             </div>
 
+                            {/* Filter Bar */}
+                            <div className="mb-6 bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 shadow-xs border border-gray-100 dark:border-gray-700">
+                                <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-gray-100 dark:border-gray-700">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-2">
+                                        Filter By:
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFilterType("all");
+                                            if (isFiltered) handleClearFilter();
+                                        }}
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                            filterType === "all"
+                                                ? "bg-orange-500 text-white shadow-xs"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        All Reviews
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFilterType("date_range")}
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                            filterType === "date_range"
+                                                ? "bg-orange-500 text-white shadow-xs"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        📅 Date Range
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFilterType("month")}
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                            filterType === "month"
+                                                ? "bg-orange-500 text-white shadow-xs"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        🗓️ By Month
+                                    </button>
+                                </div>
+
+                                {filterError && (
+                                    <div className="mt-3 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 text-xs border border-red-200 dark:border-red-800">
+                                        {filterError}
+                                    </div>
+                                )}
+
+                                {/* Filter Inputs */}
+                                {filterType === "date_range" && (
+                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                Start Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                End Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200"
+                                            />
+                                        </div>
+                                        <div className="flex items-end gap-2 mt-4 sm:mt-0">
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyFilter}
+                                                disabled={filterLoading}
+                                                className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow-xs cursor-pointer"
+                                            >
+                                                {filterLoading ? "Filtering..." : "Apply Filter"}
+                                            </button>
+                                            {isFiltered && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleClearFilter}
+                                                    className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 font-semibold px-3 py-1.5 rounded-lg text-xs cursor-pointer"
+                                                >
+                                                    Clear Filters
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {filterType === "month" && (
+                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                Month
+                                            </label>
+                                            <select
+                                                value={month}
+                                                onChange={(e) => setMonth(e.target.value)}
+                                                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200"
+                                            >
+                                                {[
+                                                    { num: "1", name: "January" },
+                                                    { num: "2", name: "February" },
+                                                    { num: "3", name: "March" },
+                                                    { num: "4", name: "April" },
+                                                    { num: "5", name: "May" },
+                                                    { num: "6", name: "June" },
+                                                    { num: "7", name: "July" },
+                                                    { num: "8", name: "August" },
+                                                    { num: "9", name: "September" },
+                                                    { num: "10", name: "October" },
+                                                    { num: "11", name: "November" },
+                                                    { num: "12", name: "December" }
+                                                ].map((m) => (
+                                                    <option key={m.num} value={m.num}>
+                                                        {m.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                Year
+                                            </label>
+                                            <select
+                                                value={year}
+                                                onChange={(e) => setYear(e.target.value)}
+                                                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200"
+                                            >
+                                                {[2024, 2025, 2026, 2027].map((y) => (
+                                                    <option key={y} value={y}>
+                                                        {y}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex items-end gap-2 mt-4 sm:mt-0">
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyFilter}
+                                                disabled={filterLoading}
+                                                className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow-xs cursor-pointer"
+                                            >
+                                                {filterLoading ? "Filtering..." : "Apply Filter"}
+                                            </button>
+                                            {isFiltered && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleClearFilter}
+                                                    className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 font-semibold px-3 py-1.5 rounded-lg text-xs cursor-pointer"
+                                                >
+                                                    Clear Filters
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reviews Cards List */}
                             {myReviews.length === 0 ? (
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center">
                                     <div className="text-5xl mb-3">💬</div>
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                                        You haven't submitted any reviews yet
+                                        {isFiltered
+                                            ? "No reviews found for the selected period."
+                                            : "You haven't submitted any reviews yet"}
                                     </h3>
                                     <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm max-w-md mx-auto">
-                                        Rate an eligible completed order above to add your feedback. Your reviews help other customers discover top-rated dishes!
+                                        {isFiltered
+                                            ? "Try selecting a broader date range or a different month."
+                                            : "Rate an eligible completed order above to add your feedback. Your reviews help other customers discover top-rated dishes!"}
                                     </p>
+                                    {isFiltered && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClearFilter}
+                                            className="mt-4 inline-block text-orange-600 hover:underline text-sm font-semibold cursor-pointer"
+                                        >
+                                            View all reviews
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -336,7 +666,7 @@ function Feedback() {
                                             className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col justify-between"
                                         >
                                             <div>
-                                                <div className="flex items-start justify-between gap-2 mb-3">
+                                                <div className="flex items-start justify-between gap-2 mb-2">
                                                     <h3 className="font-bold text-gray-900 dark:text-white text-base">
                                                         {rev.restaurantName}
                                                     </h3>
@@ -344,6 +674,15 @@ function Feedback() {
                                                         {formatDate(rev.createdAt)}
                                                     </span>
                                                 </div>
+
+                                                {/* Dish Name if specific to a food */}
+                                                {rev.foodName ? (
+                                                    <div className="mb-2.5">
+                                                        <span className="inline-block bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                                            🍽️ {rev.foodName}
+                                                        </span>
+                                                    </div>
+                                                ) : null}
 
                                                 {/* Star Rating */}
                                                 <div className="flex items-center gap-1 text-amber-400 text-lg mb-3">
@@ -357,11 +696,32 @@ function Feedback() {
                                                     </span>
                                                 </div>
 
-                                                {/* Written Comment (ONLY shown if provided) */}
+                                                {/* Written Comment */}
                                                 {rev.comment && rev.comment.trim() && (
-                                                    <p className="text-sm text-gray-700 dark:text-gray-300 italic bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300 italic bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800 mb-3">
                                                         "{rev.comment}"
                                                     </p>
+                                                )}
+
+                                                {/* Photos if any */}
+                                                {Array.isArray(rev.images) && rev.images.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        {rev.images.map((img, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                type="button"
+                                                                onClick={() => setPreviewImage(getBackendAssetUrl(img))}
+                                                                className="relative h-14 w-14 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:scale-105 transition cursor-pointer"
+                                                                title="Click to view full photo"
+                                                            >
+                                                                <img
+                                                                    src={getBackendAssetUrl(img)}
+                                                                    alt="Review thumbnail"
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 )}
                                             </div>
 
@@ -377,9 +737,7 @@ function Feedback() {
                 )}
             </main>
 
-            {/* ======================================================== */}
-            {/* MODAL: SUBMIT STAR RATING & WRITTEN REVIEW               */}
-            {/* ======================================================== */}
+            {/* Modal: Rate & Review Order */}
             {selectedOrder && (
                 <div
                     className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
@@ -387,8 +745,7 @@ function Feedback() {
                     aria-modal="true"
                     aria-labelledby="review-dialog-title"
                 >
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-200">
-                        {/* Header */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
                             <div>
                                 <h2 id="review-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
@@ -401,7 +758,7 @@ function Feedback() {
                             <button
                                 onClick={closeReviewModal}
                                 disabled={submitting}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-light leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-light leading-none cursor-pointer"
                                 aria-label="Close"
                             >
                                 &times;
@@ -414,8 +771,8 @@ function Feedback() {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmitReview} className="mt-6 space-y-6">
-                            {/* Star Rating Component */}
+                        <form onSubmit={handleSubmitReview} className="mt-6 space-y-5">
+                            {/* Star Rating */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                     Select Rating <span className="text-red-500">*</span>
@@ -448,7 +805,7 @@ function Feedback() {
                                 </p>
                             </div>
 
-                            {/* Optional Comment Textarea */}
+                            {/* Optional Comment */}
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label
@@ -466,10 +823,54 @@ function Feedback() {
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value.slice(0, 500))}
                                     placeholder="Share your experience with this order..."
-                                    rows={4}
+                                    rows={3}
                                     maxLength={500}
                                     className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 />
+                            </div>
+
+                            {/* Add Photos */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1.5">
+                                    Add Photos <span className="text-xs text-gray-400 font-normal">(optional, max 3 photos, up to 5MB each)</span>
+                                </label>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {selectedImages.map((imgItem, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="relative h-16 w-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xs"
+                                        >
+                                            <img
+                                                src={imgItem.preview}
+                                                alt="Dish preview"
+                                                className="h-full w-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(idx)}
+                                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow-md hover:bg-red-700 cursor-pointer"
+                                                title="Remove image"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {selectedImages.length < 3 && (
+                                        <label className="h-16 w-16 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-orange-500 dark:hover:border-orange-400 cursor-pointer transition text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40">
+                                            <span className="text-xl leading-none">📷</span>
+                                            <span className="text-[10px] font-medium mt-1">Upload</span>
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                multiple
+                                                onChange={handleImageChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Actions */}
@@ -478,7 +879,7 @@ function Feedback() {
                                     type="button"
                                     onClick={closeReviewModal}
                                     disabled={submitting}
-                                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
                                 >
                                     Cancel
                                 </button>
@@ -488,7 +889,7 @@ function Feedback() {
                                     className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition flex items-center gap-2 ${
                                         submitting || rating === 0
                                             ? "bg-gray-400 cursor-not-allowed"
-                                            : "bg-orange-500 hover:bg-orange-600 active:scale-[0.99]"
+                                            : "bg-orange-500 hover:bg-orange-600 active:scale-[0.99] cursor-pointer"
                                     }`}
                                 >
                                     {submitting ? (
@@ -506,10 +907,36 @@ function Feedback() {
                 </div>
             )}
 
+            {/* Modal for Full-size Image Preview */}
+            {previewImage && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs"
+                    onClick={() => setPreviewImage(null)}
+                >
+                    <div
+                        className="relative max-w-3xl max-h-[90vh] bg-black/40 p-2 rounded-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
+                            aria-label="Close image preview"
+                        >
+                            ✕
+                        </button>
+                        <img
+                            src={previewImage}
+                            alt="Full review photo"
+                            className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+                        />
+                    </div>
+                </div>
+            )}
+
             <Footer />
         </div>
     );
 }
 
 export default Feedback;
-

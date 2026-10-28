@@ -5,7 +5,7 @@ import FoodCard from "../components/FoodCard";
 import SearchBar from "../components/SearchBar";
 import hero from "../assets/hero.jpg";
 import { getFoods } from "../services/catalogApi";
-import { apiRequest } from "../services/api";
+import { apiRequest, getBackendAssetUrl } from "../services/api";
 
 function Home() {
     const [filter, setFilter] = useState("all");
@@ -15,6 +15,7 @@ function Home() {
     const [catalogError, setCatalogError] = useState("");
     const [publicReviews, setPublicReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         getFoods()
@@ -93,6 +94,13 @@ function Home() {
     if (priceFilter === "above250") {
         filteredFoods = filteredFoods.filter((food) => getPrice(food) > 250);
     }
+
+    // Always sort available foods first, unavailable foods last
+    filteredFoods.sort((a, b) => {
+        const aAvail = a.availability !== false ? 1 : 0;
+        const bAvail = b.availability !== false ? 1 : 0;
+        return bAvail - aAvail;
+    });
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -451,6 +459,15 @@ function Home() {
                                         ))}
                                     </div>
 
+                                    {/* Dish Name if provided */}
+                                    {rev.foodName ? (
+                                        <div className="mb-2">
+                                            <span className="inline-block bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                                🍽️ {rev.foodName}
+                                            </span>
+                                        </div>
+                                    ) : null}
+
                                     {/* Comment if provided */}
                                     {rev.comment && rev.comment.trim() ? (
                                         <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed italic mb-6">
@@ -462,6 +479,27 @@ function Home() {
                                         </p>
                                     )}
                                 </div>
+
+                                {/* Review Images Thumbnails */}
+                                    {Array.isArray(rev.images) && rev.images.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {rev.images.map((img, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setPreviewImage(getBackendAssetUrl(img))}
+                                                    className="relative h-14 w-14 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:scale-105 transition cursor-pointer"
+                                                    title="Click to enlarge"
+                                                >
+                                                    <img
+                                                        src={getBackendAssetUrl(img)}
+                                                        alt="Review thumbnail"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
 
                                 <div className="pt-4 border-t border-gray-100 dark:border-gray-700/80 flex items-end justify-between gap-3">
                                     <div>
@@ -487,6 +525,33 @@ function Home() {
                     </div>
                 )}
             </section>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs"
+                    onClick={() => setPreviewImage(null)}
+                >
+                    <div
+                        className="relative max-w-3xl max-h-[90vh] bg-black/40 p-2 rounded-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
+                            aria-label="Close image preview"
+                        >
+                            ✕
+                        </button>
+                        <img
+                            src={previewImage}
+                            alt="Enlarged review photo"
+                            className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* =========================
                 FOOTER

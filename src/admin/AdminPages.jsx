@@ -327,6 +327,7 @@ export function AdminCustomerDetails() {
 
 export function AdminFood() {
     const [foods, setFoods] = useState(null);
+    const [search, setSearch] = useState("");
     const [error, setError] = useState("");
     const load = () => { setError(""); adminApi("/foods").then((x) => setFoods(x.items)).catch((e) => setError(e.message)); };
     useEffect(load, []);
@@ -334,35 +335,78 @@ export function AdminFood() {
     const toggle = async (f) => { await adminApi(`/foods/${f._id}/availability`, { method: "PUT", body: JSON.stringify({ availability: !f.availability }) }); load(); };
     if (error) return <ErrorBox error={error} />;
     if (!foods) return <Loading />;
+
+    const filteredFoods = (foods || [])
+        .filter((f) => {
+            if (!search.trim()) return true;
+            const q = search.toLowerCase();
+            const name = (f.name || "").toLowerCase();
+            const category = (f.category || "").toLowerCase();
+            const restaurantName = (f.restaurant?.name || "").toLowerCase();
+            return name.includes(q) || category.includes(q) || restaurantName.includes(q);
+        })
+        .sort((a, b) => {
+            const aAvail = a.availability !== false ? 1 : 0;
+            const bAvail = b.availability !== false ? 1 : 0;
+            return bAvail - aAvail;
+        });
+
     return (
         <section>
-            <div className="flex items-center justify-between">
-                <div><h2 className="text-2xl font-bold">Food Management</h2><p className="text-slate-500">Admin-managed menu records.</p></div>
-                <Link to="/admin/food/add" className="rounded-lg bg-amber-400 px-4 py-2 font-semibold">+ Add Food</Link>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold">Food Management</h2>
+                    <p className="text-slate-500">Admin-managed menu records.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search food, category, restaurant..."
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-64"
+                    />
+                    <Link to="/admin/food/add" className="rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-900 shadow-sm hover:bg-amber-500">
+                        + Add Food
+                    </Link>
+                </div>
             </div>
-            <div className="mt-5 overflow-x-auto rounded-xl bg-white shadow-sm">
+            <div className="mt-5 max-h-[600px] overflow-y-auto overflow-x-auto rounded-xl bg-white shadow-sm border border-slate-200">
                 <table className="w-full min-w-[750px] text-left text-sm">
-                    <thead className="bg-slate-50 text-slate-500">
-                        <tr><th className="p-3">Food</th><th className="p-3">Category</th><th className="p-3">Restaurant</th><th className="p-3">Price</th><th className="p-3">Availability</th><th className="p-3">Actions</th></tr>
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700 shadow-xs">
+                        <tr>
+                            <th className="p-3">Food</th>
+                            <th className="p-3">Category</th>
+                            <th className="p-3">Restaurant</th>
+                            <th className="p-3">Price</th>
+                            <th className="p-3">Availability</th>
+                            <th className="p-3">Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        {foods.length ? foods.map((f) => (
+                        {filteredFoods.length ? filteredFoods.map((f) => (
                             <tr className="border-t" key={f._id}>
                                 <td className="p-3"><b>{f.name}</b><br /><span className="text-slate-500">{f.description}</span></td>
                                 <td className="p-3">{f.category}</td>
                                 <td className="p-3">{f.restaurant?.name || "--"}</td>
                                 <td className="p-3">{money(f.price)}</td>
                                 <td className="p-3">
-                                    <button onClick={() => toggle(f)}>
-                                        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${f.availability ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>{f.availability ? "Available" : "Unavailable"}</span>
+                                    <button onClick={() => toggle(f)} title="Click to toggle availability" className="cursor-pointer">
+                                        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${f.availability ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-red-100 text-red-700 hover:bg-red-200"}`}>{f.availability ? "Available" : "Unavailable"}</span>
                                     </button>
                                 </td>
                                 <td className="space-x-3 p-3">
                                     <Link className="text-amber-700 hover:underline" to={`/admin/food/edit/${f._id}`}>Edit</Link>
-                                    <button className="text-red-600 hover:underline" onClick={() => remove(f._id)}>Delete</button>
+                                    <button className="text-red-600 hover:underline cursor-pointer" onClick={() => remove(f._id)}>Delete</button>
                                 </td>
                             </tr>
-                        )) : <tr><td colSpan="6" className="p-8 text-center text-slate-500">No food records yet. Add the first one.</td></tr>}
+                        )) : (
+                            <tr>
+                                <td colSpan="6" className="p-8 text-center text-slate-500">
+                                    {search.trim() ? "No foods found matching your search." : "No food records yet. Add the first one."}
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

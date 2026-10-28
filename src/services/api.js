@@ -5,6 +5,15 @@ export const CUSTOMER_USER_KEY = "foodexpress_user";
 export const ADMIN_TOKEN_KEY = "foodexpress_admin_token";
 export const ADMIN_USER_KEY = "foodexpress_admin_user";
 
+export const getBackendAssetUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+        return url;
+    }
+    const base = API_URL.replace(/\/api$/, "");
+    return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 export async function apiRequest(path, options = {}, tokenKey = CUSTOMER_TOKEN_KEY) {
     const token = localStorage.getItem(tokenKey);
     const response = await fetch(`${API_URL}${path}`, {

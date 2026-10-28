@@ -8,6 +8,7 @@ import {
 
 // Home loads normally
 import Home from "./pages/Home";
+import Chatbot from "./components/Chatbot";
 
 // Other pages load only when their route is opened
 const Auth = lazy(() => import("./pages/Auth"));
@@ -169,6 +170,7 @@ function App() {
 
         </Routes>
       </Suspense>
+        <Chatbot />
       </RouteErrorBoundary>
     </BrowserRouter>
   );

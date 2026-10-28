@@ -309,7 +309,7 @@ const getCustomer = async (req, res) => {
 
 const listFoods = async (_req, res) => {
     try {
-        const foods = await Food.find().populate("restaurant", "name location active").sort({ createdAt: -1 });
+        const foods = await Food.find().populate("restaurant", "name location active").sort({ availability: -1, createdAt: -1 });
         res.json({ items: foods });
     } catch (error) {
         console.error("List Foods Error:", error.message);

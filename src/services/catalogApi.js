@@ -19,7 +19,10 @@ export const toFood = (food) => {
         price: Number(food.price),
         restaurantId: food.restaurant?._id || food.restaurant,
         isVeg: veg,
-        type: veg ? "veg" : "nonveg"
+        type: veg ? "veg" : "nonveg",
+        rating: food.rating !== undefined ? Number(food.rating) : 5.0,
+        ratingCount: food.ratingCount !== undefined ? Number(food.ratingCount) : 0,
+        availability: food.availability !== undefined ? Boolean(food.availability) : true
     };
 };
 
@@ -32,4 +35,3 @@ export const getFoods = async (restaurantId) => {
 export const getFood = async (id) => toFood((await apiRequest(`/foods/${id}`, {}, "")).food);
 export const getRestaurants = async () => (await apiRequest("/restaurants", {}, "")).restaurants.map(toRestaurant);
 export const getRestaurant = async (id) => toRestaurant((await apiRequest(`/restaurants/${id}`, {}, "")).restaurant);
-
