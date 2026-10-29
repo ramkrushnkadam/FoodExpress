@@ -28,11 +28,6 @@ export default function Chatbot() {
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Hide chatbot on admin routes
-    if (location.pathname.startsWith("/admin")) {
-        return null;
-    }
-
     // Auto-scroll to bottom of chat
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -139,13 +134,17 @@ export default function Chatbot() {
         });
     };
 
+    if (location.pathname.startsWith("/admin")) {
+        return null;
+    }
+
     return (
-        <aside aria-label="Customer Support Assistant" className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <aside aria-label="Customer Support Assistant" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
             {/* ======================================================== */}
             {/* CHATBOT WINDOW                                           */}
             {/* ======================================================== */}
             {isOpen && (
-                <div className="mb-4 w-[92vw] sm:w-[410px] h-[560px] max-h-[82vh] rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="mb-3 w-[calc(100vw-32px)] sm:w-[390px] h-[520px] max-h-[80dvh] rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500 text-white p-4 sm:p-5 flex items-center justify-between shadow-xs">
                         <div className="flex items-center gap-3">
@@ -285,7 +284,7 @@ export default function Chatbot() {
                                 onKeyDown={handleKeyDown}
                                 disabled={loading}
                                 placeholder="Ask about food, ratings, reviews, orders..."
-                                className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 min-h-[42px]"
                             />
                             <button
                                 onClick={() => handleSend()}
@@ -314,13 +313,13 @@ export default function Chatbot() {
             <button
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-label={isOpen ? "Close FoodExpress Assistant" : "Open FoodExpress Assistant"}
-                className="group relative flex items-center gap-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-3.5 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="group relative flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold p-3.5 sm:px-4 sm:py-3.5 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer min-w-[48px] min-h-[48px] justify-center"
             >
                 <div className="w-6 h-6 flex items-center justify-center text-lg">
                     {isOpen ? "✕" : "💬"}
                 </div>
                 {!isOpen && (
-                    <span className="text-sm font-semibold tracking-wide pr-1">
+                    <span className="hidden sm:inline text-sm font-semibold tracking-wide pr-1">
                         FoodExpress Assistant
                     </span>
                 )}

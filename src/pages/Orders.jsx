@@ -101,7 +101,7 @@ function Orders() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white dark:text-gray-100 flex flex-col justify-between">
                 <Navbar />
                 <main className="min-h-screen flex items-center justify-center">
                     <div className="text-center">
@@ -115,7 +115,7 @@ function Orders() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white dark:text-gray-100 flex flex-col justify-between">
             <Navbar />
             <main className="min-h-screen py-10 px-4 sm:px-6">
 
@@ -129,7 +129,7 @@ function Orders() {
                             text-3xl
                             sm:text-4xl
                             font-bold
-                            text-gray-900
+                            text-gray-900 dark:text-white
                         ">
                             My Orders 📦
                         </h1>
@@ -161,11 +161,7 @@ function Orders() {
                     {!error && orders.length === 0 ? (
 
                         <div className="
-                            bg-white
-                            rounded-2xl
-                            shadow-md
-                            p-10
-                            text-center
+                            bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-6 sm:p-10 text-center
                         ">
 
                             <div className="text-6xl mb-4">
@@ -175,7 +171,7 @@ function Orders() {
                             <h2 className="
                                 text-2xl
                                 font-bold
-                                text-gray-800
+                                text-gray-800 dark:text-gray-200
                             ">
                                 No Orders Yet
                             </h2>
@@ -198,10 +194,7 @@ function Orders() {
                                 <div
                                     key={order._id}
                                     className="
-                                        bg-white
-                                        rounded-2xl
-                                        shadow-md
-                                        hover:shadow-lg
+                                        bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md
                                         transition
                                         duration-300
                                         overflow-hidden
@@ -213,8 +206,7 @@ function Orders() {
                                     <div className="
                                         p-5
                                         sm:p-6
-                                        border-b
-                                        flex
+                                        border-b border-gray-100 dark:border-gray-700 flex
                                         flex-col
                                         sm:flex-row
                                         sm:justify-between
@@ -234,7 +226,7 @@ function Orders() {
                                             <h2 className="
                                                 text-xl
                                                 font-bold
-                                                text-gray-900
+                                                text-gray-900 dark:text-white
                                                 break-all
                                             ">
                                                 #{order._id}
@@ -269,7 +261,7 @@ function Orders() {
 
                                         <h3 className="
                                             font-semibold
-                                            text-gray-800
+                                            text-gray-800 dark:text-gray-200
                                             mb-4
                                         ">
                                             🍽️ Ordered Items
@@ -287,10 +279,7 @@ function Orders() {
                                                                 flex
                                                                 justify-between
                                                                 items-center
-                                                                bg-gray-50
-                                                                rounded-lg
-                                                                px-4
-                                                                py-3
+                                                                bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700/60 rounded-lg px-4 py-3
                                                                 gap-3
                                                             "
                                                         >
@@ -298,7 +287,7 @@ function Orders() {
                                                             <div>
 
                                                                 <p className="
-                                                                    text-gray-800
+                                                                    text-gray-800 dark:text-gray-200
                                                                     font-semibold
                                                                 ">
                                                                     {item.name}
@@ -316,7 +305,7 @@ function Orders() {
 
                                                             <p className="
                                                                 font-bold
-                                                                text-gray-800
+                                                                text-gray-800 dark:text-gray-200
                                                             ">
                                                                 ₹
                                                                 {Number(item.price) *
@@ -334,14 +323,12 @@ function Orders() {
 
                                         <div className="
                                             mt-6
-                                            bg-orange-50
-                                            rounded-xl
-                                            p-4
+                                            bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40 rounded-xl p-4
                                         ">
 
                                             <h3 className="
                                                 font-semibold
-                                                text-gray-800
+                                                text-gray-800 dark:text-gray-200
                                                 mb-3
                                             ">
                                                 📍 Order Information
@@ -416,9 +403,7 @@ function Orders() {
                                         ">
 
                                             <div className="
-                                                bg-gray-50
-                                                rounded-xl
-                                                p-4
+                                                bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700/60 rounded-xl p-4
                                             ">
 
                                                 <p className="
@@ -430,7 +415,7 @@ function Orders() {
 
                                                 <p className="
                                                     font-semibold
-                                                    text-gray-800
+                                                    text-gray-800 dark:text-gray-200
                                                     mt-1
                                                 ">
                                                     {order.paymentMethod || "UPI"}

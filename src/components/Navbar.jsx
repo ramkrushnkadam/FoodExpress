@@ -23,6 +23,11 @@ function Navbar() {
             ? "text-orange-500 font-bold"
             : "text-gray-700 dark:text-gray-200 hover:text-orange-500 transition";
 
+    const mobileNavClass = ({ isActive }) =>
+        isActive
+            ? "flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold min-h-[44px]"
+            : "flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium min-h-[44px] transition";
+
 
     const closeMenu = () => {
         setMenuOpen(false);
@@ -167,7 +172,7 @@ function Navbar() {
                         to="/profile"
                         className={navClass}
                     >
-                        👤 {user ? user.name : "Profile"}
+                        👤 <span className="max-w-[120px] lg:max-w-[150px] truncate inline-block align-bottom">{user ? user.name : "Profile"}</span>
                     </NavLink>
 
 
@@ -194,162 +199,105 @@ function Navbar() {
 
 
                 {/* Mobile Controls */}
-
-                <div className="
-                md:hidden
-                flex
-                items-center
-                gap-3
-                "
-                >
-
+                <div className="md:hidden flex items-center gap-1.5">
                     {/* Mobile Cart */}
-
                     <Link
                         to="/cart"
-                        className="
-                        relative
-                        text-xl
-                        text-gray-700
-                        dark:text-gray-200
-                        "
+                        className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-xl text-gray-700 dark:text-gray-200 hover:text-orange-500 transition"
+                        aria-label="Shopping Cart"
                     >
-
                         🛒
-
                         {displayCount > 0 && (
-
                             <span
-                                className="
-                                absolute
-                                -top-2
-                                -right-3
-                                bg-red-500
-                                text-white
-                                text-xs
-                                w-5
-                                h-5
-                                rounded-full
-                                flex
-                                items-center
-                                justify-center
-                                "
+                                className="absolute top-1.5 right-1 bg-red-500 text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-xs"
                             >
                                 {displayCount}
                             </span>
-
                         )}
-
                     </Link>
 
-
                     {/* Theme Button */}
-
                     <button
                         onClick={toggleTheme}
-                        className="
-                        px-2
-                        py-1
-                        rounded-lg
-                        bg-gray-100
-                        dark:bg-gray-700
-                        "
+                        aria-label="Toggle dark mode"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer"
                     >
                         {darkMode ? "☀️" : "🌙"}
                     </button>
 
-
                     {/* Menu Button */}
-
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
-                        className="
-                        text-2xl
-                        text-gray-700
-                        dark:text-gray-200
-                        "
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={menuOpen}
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-2xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                     >
                         {menuOpen ? "✕" : "☰"}
                     </button>
-
                 </div>
 
             </div>
 
 
             {/* Mobile Menu */}
-
             {menuOpen && (
-
                 <div
-                    className="
-                    md:hidden
-                    border-t
-                    border-gray-200
-                    dark:border-gray-700
-                    bg-white
-                    dark:bg-gray-900
-                    px-6
-                    py-5
-                    space-y-4
-                    "
+                    className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-4 py-4 space-y-2 shadow-lg animate-in slide-in-from-top-2 duration-150"
                 >
-
                     <NavLink
                         to="/"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        🏠 Home
+                        <span className="text-lg">🏠</span>
+                        <span>Home</span>
                     </NavLink>
-
 
                     <NavLink
                         to="/restaurants"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        🍽️ Restaurants
+                        <span className="text-lg">🍽️</span>
+                        <span>Restaurants</span>
                     </NavLink>
-
 
                     <NavLink
                         to="/orders"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        📦 Orders
+                        <span className="text-lg">📦</span>
+                        <span>Orders</span>
                     </NavLink>
-
 
                     <NavLink
                         to="/feedback"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        ⭐ Feedback & Reviews
+                        <span className="text-lg">⭐</span>
+                        <span>Feedback & Reviews</span>
                     </NavLink>
-
 
                     <NavLink
                         to="/cart"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        🛒 Cart ({cart.length})
+                        <span className="text-lg">🛒</span>
+                        <span>Cart ({displayCount})</span>
                     </NavLink>
-
 
                     <NavLink
                         to="/profile"
                         onClick={closeMenu}
-                        className={navClass}
+                        className={mobileNavClass}
                     >
-                        👤 {user ? user.name : "Profile"}
+                        <span className="text-lg">👤</span>
+                        <span className="truncate">{user ? user.name : "Profile"}</span>
                     </NavLink>
-
                 </div>
-
             )}
 
         </nav>

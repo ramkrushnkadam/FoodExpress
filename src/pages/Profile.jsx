@@ -60,13 +60,13 @@ function Profile() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col justify-between">
             <Navbar />
 
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 w-full flex-grow">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-grow">
                 {/* Page Title */}
                 <div className="mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">
                         My Profile 👤
                     </h1>
                     <p className="text-gray-500 mt-2">
@@ -87,7 +87,7 @@ function Profile() {
                 )}
 
                 {user ? (
-                    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md overflow-hidden">
                         {/* Profile Header */}
                         <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-6 sm:px-8 py-8 text-white">
                             <div className="flex flex-col sm:flex-row items-center gap-5">
@@ -107,7 +107,7 @@ function Profile() {
                                     {!isEditing && (
                                         <button
                                             onClick={() => setIsEditing(true)}
-                                            className="px-5 py-2.5 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition shadow"
+                                            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center px-5 py-2.5 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition shadow cursor-pointer"
                                         >
                                             ✏️ Edit Profile
                                         </button>
@@ -120,7 +120,7 @@ function Profile() {
                         <div className="p-6 sm:p-8">
                             {isEditing ? (
                                 <form onSubmit={handleSave} className="space-y-5">
-                                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                                         Update Personal Information
                                     </h3>
 
@@ -132,7 +132,7 @@ function Profile() {
                                             type="text"
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-white dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                                             required
                                         />
                                     </div>
@@ -158,7 +158,7 @@ function Profile() {
                                             value={formData.mobile}
                                             onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                                             placeholder="e.g. 9876543210"
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-white dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                                         />
                                     </div>
 
@@ -171,7 +171,7 @@ function Profile() {
                                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                             placeholder="Enter your default delivery address"
                                             rows="3"
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-white dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                                         />
                                     </div>
 
@@ -184,22 +184,22 @@ function Profile() {
                                             value={formData.password}
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                             placeholder="Min 6 characters"
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-white dark:text-gray-100 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                                         />
                                     </div>
 
-                                    <div className="flex gap-4 pt-2">
+                                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
                                         <button
                                             type="submit"
                                             disabled={saving}
-                                            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition disabled:opacity-50"
+                                            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition disabled:opacity-50 cursor-pointer"
                                         >
                                             {saving ? "Saving..." : "Save Changes"}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIsEditing(false)}
-                                            className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition"
+                                            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center px-6 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition cursor-pointer"
                                         >
                                             Cancel
                                         </button>
@@ -207,56 +207,56 @@ function Profile() {
                                 </form>
                             ) : (
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-5">
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-5">
                                         Account Details
                                     </h3>
 
                                     <div className="space-y-4">
-                                        <div className="border rounded-xl p-4 bg-gray-50 flex justify-between items-center">
+                                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/60 flex justify-between items-center">
                                             <div>
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name</p>
-                                                <p className="font-semibold text-gray-800 mt-0.5">{user.name || "Not specified"}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-white mt-0.5">{user.name || "Not specified"}</p>
                                             </div>
                                         </div>
 
-                                        <div className="border rounded-xl p-4 bg-gray-50 flex justify-between items-center">
+                                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/60 flex justify-between items-center">
                                             <div>
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</p>
-                                                <p className="font-semibold text-gray-800 mt-0.5">{user.email}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-white mt-0.5">{user.email}</p>
                                             </div>
                                         </div>
 
-                                        <div className="border rounded-xl p-4 bg-gray-50 flex justify-between items-center">
+                                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/60 flex justify-between items-center">
                                             <div>
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mobile Number</p>
-                                                <p className="font-semibold text-gray-800 mt-0.5">{user.mobile || "Not specified"}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-white mt-0.5">{user.mobile || "Not specified"}</p>
                                             </div>
                                         </div>
 
-                                        <div className="border rounded-xl p-4 bg-gray-50 flex justify-between items-center">
+                                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/60 flex justify-between items-center">
                                             <div>
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Default Delivery Address</p>
-                                                <p className="font-semibold text-gray-800 mt-0.5">{user.address || "Not specified"}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-white mt-0.5">{user.address || "Not specified"}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Quick Actions */}
-                                    <h3 className="text-xl font-bold text-gray-800 mt-8 mb-5">Quick Actions</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mt-8 mb-5">Quick Actions</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <Link
                                             to="/orders"
-                                            className="border border-gray-200 rounded-xl p-4 hover:border-orange-500 hover:bg-orange-50 transition"
+                                            className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-gray-700/50 transition"
                                         >
-                                            <p className="font-bold text-gray-800">📦 My Orders</p>
+                                            <p className="font-bold text-gray-800 dark:text-white">📦 My Orders</p>
                                             <p className="text-sm text-gray-500 mt-1">Track active orders & view order history</p>
                                         </Link>
 
                                         <Link
                                             to="/cart"
-                                            className="border border-gray-200 rounded-xl p-4 hover:border-orange-500 hover:bg-orange-50 transition"
+                                            className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-gray-700/50 transition"
                                         >
-                                            <p className="font-bold text-gray-800">🛒 My Cart</p>
+                                            <p className="font-bold text-gray-800 dark:text-white">🛒 My Cart</p>
                                             <p className="text-sm text-gray-500 mt-1">Review items currently in your cart</p>
                                         </Link>
                                     </div>
@@ -264,7 +264,7 @@ function Profile() {
                                     {/* Logout */}
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full mt-8 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition shadow-sm"
+                                        className="w-full mt-8 bg-red-500 hover:bg-red-600 text-white py-3 min-h-[48px] rounded-xl font-bold transition shadow-sm flex items-center justify-center cursor-pointer"
                                     >
                                         🚪 Logout
                                     </button>
@@ -279,7 +279,7 @@ function Profile() {
                             👤
                         </div>
 
-                        <h2 className="text-2xl font-bold text-gray-800 mt-6">
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mt-6">
                             You are not logged in
                         </h2>
 

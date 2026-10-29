@@ -27,7 +27,7 @@ function Cart() {
 
         return (
 
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col justify-between">
 
                 <Navbar />
 
@@ -40,10 +40,7 @@ function Cart() {
                 ">
 
                     <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-md
-                        p-10
+                        bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-6 sm:p-10
                         text-center
                         max-w-md
                         w-full
@@ -64,7 +61,7 @@ function Cart() {
 
 
                         <p className="
-                            text-gray-500
+                            text-gray-500 dark:text-gray-400
                             mt-3
                         ">
                             Add some delicious food to your cart.
@@ -120,17 +117,12 @@ function Cart() {
 
     return (
 
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col justify-between">
 
             <Navbar />
 
 
-            <main className="
-                max-w-6xl
-                mx-auto
-                px-6
-                py-10
-            ">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1">
 
 
                 {/* Heading */}
@@ -154,7 +146,7 @@ function Cart() {
 
 
                         <p className="
-                            text-gray-500
+                            text-gray-500 dark:text-gray-400
                             mt-2
                         ">
                             {cartCount} item
@@ -176,11 +168,7 @@ function Cart() {
                     {/* Cart Items */}
 
                     <div className="
-                        lg:col-span-2
-                        bg-white
-                        rounded-2xl
-                        shadow-md
-                        p-6
+                        lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-4 sm:p-6
                     ">
 
                         {cart.map((item) => (
@@ -198,11 +186,7 @@ function Cart() {
                     {/* Order Summary */}
 
                     <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-md
-                        p-6
-                        h-fit
+                        bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-5 sm:p-6 h-fit
                         lg:sticky
                         lg:top-24
                     ">
@@ -219,7 +203,7 @@ function Cart() {
                         <div className="
                             flex
                             justify-between
-                            text-gray-600
+                            text-gray-600 dark:text-gray-300
                             mb-4
                         ">
 
@@ -237,7 +221,7 @@ function Cart() {
                         <div className="
                             flex
                             justify-between
-                            text-gray-600
+                            text-gray-600 dark:text-gray-300
                             mb-4
                         ">
 
@@ -255,7 +239,7 @@ function Cart() {
                         <div className="
                             flex
                             justify-between
-                            text-gray-600
+                            text-gray-600 dark:text-gray-300
                             mb-4
                         ">
 

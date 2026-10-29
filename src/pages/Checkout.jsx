@@ -440,11 +440,11 @@ function Checkout() {
     // =========================================================
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col justify-between">
 
             <Navbar />
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1">
 
                 {/* =================================================
                     HEADER
@@ -456,7 +456,7 @@ function Checkout() {
                         text-3xl
                         sm:text-4xl
                         font-bold
-                        text-gray-800
+                        text-gray-900 dark:text-white
                     ">
                         Checkout 💳
                     </h1>
@@ -474,11 +474,7 @@ function Checkout() {
                 {orderPlaced ? (
 
                     <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-md
-                        p-8
-                        sm:p-12
+                        bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-6 sm:p-12
                         text-center
                     ">
 
@@ -738,12 +734,7 @@ function Checkout() {
                         ================================================= */}
 
                         <div className="
-                            lg:col-span-2
-                            bg-white
-                            rounded-2xl
-                            shadow-md
-                            p-6
-                            sm:p-8
+                            lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-5 sm:p-8
                         ">
 
                             <h2 className="
@@ -1321,11 +1312,7 @@ function Checkout() {
                         ================================================= */}
 
                         <div className="
-                            bg-white
-                            rounded-2xl
-                            shadow-md
-                            p-6
-                            h-fit
+                            bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-md p-5 sm:p-6 h-fit
                         ">
 
                             <h2 className="
@@ -1489,13 +1476,7 @@ function Checkout() {
                 ">
 
                     <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-2xl
-                        w-full
-                        max-w-md
-                        p-6
-                        text-center
+                        bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md p-5 sm:p-6 text-center max-h-[90dvh] overflow-y-auto
                     ">
 
                         {/* CLOSE */}
@@ -1505,10 +1486,7 @@ function Checkout() {
                                 setShowQR(false)
                             }
                             className="
-                                float-right
-                                text-gray-500
-                                hover:text-red-500
-                                text-xl
+                                float-right min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-red-500 text-xl cursor-pointer
                             "
                         >
                             ✕
@@ -1543,8 +1521,12 @@ function Checkout() {
                                 src={qr}
                                 alt="FoodExpress UPI QR Code"
                                 className="
-                                    w-56
-                                    h-56
+                                    w-44
+                                    sm:w-56
+                                    h-44
+                                    sm:h-56
+                                    max-w-full
+                                    aspect-square
                                     object-contain
                                     rounded-lg
                                 "

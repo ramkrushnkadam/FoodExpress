@@ -27,7 +27,6 @@ const images = {
     "Biryani Express": biryani,
     "Chicken Biryani": biryani,
     "Chinese Corner": chinese,
-    "Hakka Noodles": chinese,
     "Chicken Hub": chicken,
     "Chicken 65": chicken
     ,"White Sauce Pasta": pasta, "Pav Bhaji": pavbhaji, "Paneer Butter Masala": paneer, "Butter Naan": naan,

@@ -109,8 +109,8 @@ export function AdminOrders() {
                     <h2 className="text-2xl font-bold">Orders</h2>
                     <p className="text-slate-500">{data.pagination.total} orders found</p>
                 </div>
-                <div className="flex gap-2">
-                    <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} placeholder="Customer or mobile" className="rounded-lg border px-3 py-2" />
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} placeholder="Customer or mobile" className="rounded-lg border px-3 py-2 flex-1 min-w-[160px] text-sm" />
                     <button onClick={load} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Search</button>
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border px-3">
                         <option value="">All</option>
@@ -255,8 +255,8 @@ export function AdminCustomers() {
     return (
         <section>
             <h2 className="text-2xl font-bold">Customers</h2>
-            <div className="mt-4 flex gap-2">
-                <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} className="rounded-lg border px-3 py-2" placeholder="Search name, email or mobile" />
+            <div className="mt-4 flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} className="rounded-lg border px-3 py-2 flex-1 min-w-[200px] text-sm" placeholder="Search name, email or mobile" />
                 <button onClick={load} className="rounded-lg bg-slate-900 px-4 text-white">Search</button>
             </div>
             <div className="mt-5 overflow-x-auto rounded-xl bg-white shadow-sm">
@@ -364,7 +364,7 @@ export function AdminFood() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search food, category, restaurant..."
-                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-64"
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-64"
                     />
                     <Link to="/admin/food/add" className="rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-900 shadow-sm hover:bg-amber-500">
                         + Add Food
@@ -515,7 +515,7 @@ export function AdminReports() {
     if (!data) return <Loading />;
     return (
         <section>
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div><h2 className="text-2xl font-bold">Reports</h2><p className="text-slate-500">Live performance from completed orders.</p></div>
                 <select className="rounded-lg border px-3" onChange={(e) => setRange(e.target.value)}>
                     <option value="">All time</option>

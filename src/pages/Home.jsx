@@ -128,7 +128,7 @@ function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/10" />
 
                 {/* Hero Content */}
-                <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 min-h-[520px] flex items-center">
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 min-h-[440px] sm:min-h-[520px] py-12 sm:py-16 flex items-center">
                     <div className="max-w-xl text-white">
                         {/* Small Badge */}
                         <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-sm font-medium mb-6">
@@ -136,7 +136,7 @@ function Home() {
                         </div>
 
                         {/* Heading */}
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">
+                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight">
                             Delicious food,
                             <br />
                             <span className="text-orange-400">delivered to you.</span>
@@ -148,7 +148,7 @@ function Home() {
                         </p>
 
                         {/* Search Box */}
-                        <div className="mt-8 flex flex-col sm:flex-row bg-white rounded-xl shadow-2xl overflow-hidden max-w-xl">
+                        <div className="mt-8 flex flex-col sm:flex-row bg-white rounded-xl shadow-2xl overflow-hidden max-w-xl w-full">
                             {/* Location */}
                             <div className="flex items-center gap-3 px-5 py-4 text-gray-600 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
                                 <span className="text-xl">📍</span>
@@ -166,7 +166,7 @@ function Home() {
                                         .getElementById("popular-foods")
                                         ?.scrollIntoView({ behavior: "smooth" });
                                 }}
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-4 font-bold transition duration-200 whitespace-nowrap"
+                                className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-3.5 sm:py-4 min-h-[44px] font-bold transition duration-200 whitespace-nowrap cursor-pointer flex items-center justify-center"
                             >
                                 Search
                             </button>
@@ -326,7 +326,7 @@ function Home() {
                     FOOD GRID
                 ========================== */}
                 {filteredFoods.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mt-10">
+                    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mt-8 sm:mt-10">
                         {filteredFoods.map((food) => (
                             <FoodCard key={food.id || food._id} food={food} />
                         ))}
@@ -533,13 +533,13 @@ function Home() {
                     onClick={() => setPreviewImage(null)}
                 >
                     <div
-                        className="relative max-w-3xl max-h-[90vh] bg-black/40 p-2 rounded-2xl"
+                        className="relative max-w-3xl max-h-[85dvh] bg-black/40 p-2 rounded-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             type="button"
                             onClick={() => setPreviewImage(null)}
-                            className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
+                            className="absolute -top-3 -right-3 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
                             aria-label="Close image preview"
                         >
                             ✕
@@ -547,7 +547,7 @@ function Home() {
                         <img
                             src={previewImage}
                             alt="Enlarged review photo"
-                            className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+                            className="max-h-[80dvh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
                         />
                     </div>
                 </div>

@@ -50,6 +50,7 @@ function FoodCard({ food }) {
         flex
         flex-col
         justify-between
+        min-w-0
         ${!isAvailable ? "opacity-90" : ""}
       `}
     >
@@ -62,7 +63,8 @@ function FoodCard({ food }) {
             className="
               relative
               w-full
-              h-48
+              aspect-[4/3]
+              sm:aspect-auto
               sm:h-52
               overflow-hidden
               bg-gray-100
@@ -173,8 +175,10 @@ function FoodCard({ food }) {
           <Link
             to={`/food/${food.id}`}
             className="
-              text-lg
+              text-base
+              sm:text-lg
               font-bold
+              break-words
               text-gray-800
               dark:text-white
               hover:text-orange-500
@@ -217,19 +221,19 @@ function FoodCard({ food }) {
       ========================== */}
       <div className="p-4 pt-0">
         {/* Price & Availability Status */}
-        <div className="flex items-center justify-between gap-2 mb-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-extrabold text-orange-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="text-lg sm:text-xl font-extrabold text-orange-500">
               ₹{food.price}
             </span>
             <span className="text-gray-400 text-sm">·</span>
             {isAvailable ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+              <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Available
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-800">
+              <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-800">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 Unavailable
               </span>
@@ -244,14 +248,16 @@ function FoodCard({ food }) {
             className={`
               px-3.5
               py-1.5
+              min-h-[36px]
               rounded-lg
               text-xs
               font-bold
               transition-all
               duration-200
+              shrink-0
               ${
                 isAvailable
-                  ? "bg-orange-500 hover:bg-orange-600 active:scale-95 text-white shadow-sm"
+                  ? "bg-orange-500 hover:bg-orange-600 active:scale-95 text-white shadow-sm cursor-pointer"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
               }
             `}
@@ -268,6 +274,7 @@ function FoodCard({ food }) {
           className={`
             w-full
             py-2.5
+            min-h-[44px]
             rounded-xl
             text-sm
             font-bold

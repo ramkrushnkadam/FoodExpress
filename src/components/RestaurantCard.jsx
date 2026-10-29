@@ -16,6 +16,7 @@ function RestaurantCard({ restaurant }) {
             hover:-translate-y-1
             transition
             duration-300
+            min-w-0
             "
         >
 
@@ -23,7 +24,7 @@ function RestaurantCard({ restaurant }) {
 
             <Link to={`/restaurant/${restaurant.id}`}>
 
-                <div className="h-36 overflow-hidden">
+                <div className="h-40 sm:h-44 overflow-hidden relative aspect-[16/9] bg-gray-100 dark:bg-gray-700">
 
                     <img
                         src={restaurant.image}
@@ -145,6 +146,10 @@ function RestaurantCard({ restaurant }) {
                     rounded-lg
                     text-sm
                     font-semibold
+                    min-h-[42px]
+                    flex
+                    items-center
+                    justify-center
                     transition
                     "
                 >

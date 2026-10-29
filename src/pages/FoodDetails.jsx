@@ -261,7 +261,7 @@ function FoodDetails() {
 
                         {/* Dish Card */}
                         <div className="grid overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 md:grid-cols-2">
-                            <div className="relative h-72 md:h-full min-h-[280px]">
+                            <div className="relative h-64 sm:h-80 md:h-full min-h-[240px] md:min-h-[320px]">
                                 <img
                                     className="h-full w-full object-cover"
                                     src={food.image}
@@ -336,7 +336,7 @@ function FoodDetails() {
                                             addToCart(food);
                                             showToast(`${food.name} added to cart`);
                                         }}
-                                        className={`w-full rounded-xl py-3.5 font-bold text-white shadow-md transition flex items-center justify-center gap-2 ${
+                                        className={`w-full rounded-xl py-3.5 min-h-[48px] font-bold text-white shadow-md transition flex items-center justify-center gap-2 ${
                                             isAvailable
                                                 ? "bg-orange-500 hover:bg-orange-600 active:scale-[0.99] cursor-pointer"
                                                 : "bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-60"
@@ -409,7 +409,7 @@ function FoodDetails() {
                                                         onClick={() => setRating(star)}
                                                         onMouseEnter={() => setHoverRating(star)}
                                                         onMouseLeave={() => setHoverRating(0)}
-                                                        className="text-3xl sm:text-4xl transition-transform hover:scale-110 focus:outline-none cursor-pointer"
+                                                        className="text-3xl sm:text-4xl min-w-[40px] min-h-[44px] flex items-center justify-center transition-transform hover:scale-110 focus:outline-none cursor-pointer"
                                                         title={`${star} Star`}
                                                     >
                                                         <span
@@ -627,13 +627,13 @@ function FoodDetails() {
                     onClick={() => setPreviewModalImg(null)}
                 >
                     <div
-                        className="relative max-w-3xl max-h-[90vh] bg-black/40 p-2 rounded-2xl"
+                        className="relative max-w-3xl max-h-[85dvh] bg-black/40 p-2 rounded-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             type="button"
                             onClick={() => setPreviewModalImg(null)}
-                            className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
+                            className="absolute -top-3 -right-3 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
                             aria-label="Close image preview"
                         >
                             ✕
@@ -641,7 +641,7 @@ function FoodDetails() {
                         <img
                             src={previewModalImg}
                             alt="Full review photo"
-                            className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+                            className="max-h-[80dvh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
                         />
                     </div>
                 </div>

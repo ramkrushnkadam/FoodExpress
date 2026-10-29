@@ -519,7 +519,7 @@ function Feedback() {
 
                                 {/* Filter Inputs */}
                                 {filterType === "date_range" && (
-                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                    <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-3">
                                         <div>
                                             <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
                                                 Start Date
@@ -528,7 +528,7 @@ function Feedback() {
                                                 type="date"
                                                 value={startDate}
                                                 onChange={(e) => setStartDate(e.target.value)}
-                                                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200"
+                                                className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-xs text-gray-800 dark:text-gray-200"
                                             />
                                         </div>
                                         <div>
@@ -565,7 +565,7 @@ function Feedback() {
                                 )}
 
                                 {filterType === "month" && (
-                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                    <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-3">
                                         <div>
                                             <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
                                                 Month
@@ -745,7 +745,7 @@ function Feedback() {
                     aria-modal="true"
                     aria-labelledby="review-dialog-title"
                 >
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-200 max-h-[90dvh] overflow-y-auto">
                         <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
                             <div>
                                 <h2 id="review-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
@@ -758,7 +758,7 @@ function Feedback() {
                             <button
                                 onClick={closeReviewModal}
                                 disabled={submitting}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-light leading-none cursor-pointer"
+                                className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-light leading-none cursor-pointer"
                                 aria-label="Close"
                             >
                                 &times;
@@ -785,7 +785,7 @@ function Feedback() {
                                             onClick={() => setRating(star)}
                                             onMouseEnter={() => setHoverRating(star)}
                                             onMouseLeave={() => setHoverRating(0)}
-                                            className="text-4xl sm:text-5xl transition-transform hover:scale-110 focus:outline-none cursor-pointer"
+                                            className="text-4xl sm:text-5xl min-w-[40px] min-h-[44px] flex items-center justify-center transition-transform hover:scale-110 focus:outline-none cursor-pointer"
                                             title={`${star} Star`}
                                         >
                                             <span
@@ -914,13 +914,13 @@ function Feedback() {
                     onClick={() => setPreviewImage(null)}
                 >
                     <div
-                        className="relative max-w-3xl max-h-[90vh] bg-black/40 p-2 rounded-2xl"
+                        className="relative max-w-3xl max-h-[85dvh] bg-black/40 p-2 rounded-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             type="button"
                             onClick={() => setPreviewImage(null)}
-                            className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
+                            className="absolute -top-3 -right-3 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white text-gray-800 font-bold flex items-center justify-center shadow-lg hover:bg-gray-100 cursor-pointer text-lg z-10"
                             aria-label="Close image preview"
                         >
                             ✕
@@ -928,7 +928,7 @@ function Feedback() {
                         <img
                             src={previewImage}
                             alt="Full review photo"
-                            className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+                            className="max-h-[80dvh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
                         />
                     </div>
                 </div>
