@@ -32,6 +32,10 @@ const AdminFood = lazy(() => import("./admin/AdminPages").then((module) => ({ de
 const AddFood = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.FoodForm })));
 const EditFood = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.FoodForm })));
 const AdminRestaurants = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.AdminRestaurants })));
+const AdminCoupons = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.AdminCoupons })));
+const CouponForm = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.CouponForm })));
+const AdminSessionOffers = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.AdminSessionOffers })));
+const SessionOfferForm = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.SessionOfferForm })));
 const AdminReports = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.AdminReports })));
 const AdminSettings = lazy(() => import("./admin/AdminPages").then((module) => ({ default: module.AdminSettings })));
 
@@ -158,6 +162,12 @@ function App() {
             <Route path="food/add" element={<AddFood />} />
             <Route path="food/edit/:id" element={<EditFood edit />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
+            <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="coupons/add" element={<CouponForm />} />
+            <Route path="coupons/edit/:id" element={<CouponForm />} />
+            <Route path="session-offers" element={<AdminSessionOffers />} />
+            <Route path="session-offers/add" element={<SessionOfferForm />} />
+            <Route path="session-offers/edit/:id" element={<SessionOfferForm />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

@@ -16,11 +16,25 @@ function Home() {
     const [publicReviews, setPublicReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [previewImage, setPreviewImage] = useState(null);
+    const [sessionOffer, setSessionOffer] = useState(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         getFoods()
             .then(setFoods)
             .catch((error) => setCatalogError(error.message || "Unable to load the menu."));
+
+        apiRequest("/session-offers/current")
+            .then((data) => {
+                if (data && data.active && data.offer) {
+                    setSessionOffer(data.offer);
+                } else {
+                    setSessionOffer(null);
+                }
+            })
+            .catch(() => {
+                setSessionOffer(null);
+            });
 
         apiRequest("/reviews/public")
             .then((data) => {
@@ -101,6 +115,13 @@ function Home() {
         const bAvail = b.availability !== false ? 1 : 0;
         return bAvail - aAvail;
     });
+
+    const handleCopyCode = (code) => {
+        if (!code) return;
+        navigator.clipboard?.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -188,9 +209,37 @@ function Home() {
             <section id="popular-foods" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                     <div>
-                        <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">
-                            Popular Dishes
-                        </h2>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">
+                                Popular Dishes
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    document.getElementById("offer-banner")?.scrollIntoView({ behavior: "smooth" });
+                                }}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 hover:from-red-700 hover:to-amber-600 text-white text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full shadow-md animate-pulse cursor-pointer select-none transition"
+                                title="Click to view special offer details"
+                            >
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-200 opacity-80"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
+                                </span>
+                                <span>
+                                    {sessionOffer ? (
+                                        sessionOffer.couponCode ? (
+                                            `🪔 SPECIAL OFFER: Use ${sessionOffer.couponCode} (${sessionOffer.discountValue}% OFF)`
+                                        ) : (
+                                            `🪔 SPECIAL OFFER: ${sessionOffer.subtitle || sessionOffer.title}`
+                                        )
+                                    ) : (
+                                        "🔥 SPECIAL OFFER: Flat 30% OFF with FOOD30"
+                                    )}
+                                </span>
+                                <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                                    View ↓
+                                </span>
+                            </button>
+                        </div>
                         <p className="text-gray-500 dark:text-gray-400 mt-2">
                             Choose from our most loved dishes.
                         </p>
@@ -351,18 +400,83 @@ function Home() {
             </section>
 
             {/* =========================
-                OFFER SECTION
+                DYNAMIC DIWALI & PROMOTIONAL OFFER SECTION
             ========================== */}
-            <section className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
-                <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-                    <h2 className="text-3xl sm:text-4xl font-bold">🔥 Weekend Mega Offer</h2>
-                    <p className="text-xl sm:text-2xl mt-5">Flat 30% OFF Above ₹999</p>
-                    <p className="mt-4">Use Coupon Code</p>
-                    <div className="inline-block bg-white text-red-600 px-7 py-3 rounded-xl text-xl font-bold mt-3">
-                        FOOD30
+            {sessionOffer ? (
+                <section id="offer-banner" className="relative overflow-hidden bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white py-14 px-6 shadow-xl">
+                    {/* Festive Decorative Background Diya Accents */}
+                    <div className="absolute top-2 left-6 text-4xl opacity-20 select-none animate-pulse">🪔</div>
+                    <div className="absolute bottom-2 right-8 text-5xl opacity-20 select-none animate-pulse">🪔</div>
+                    <div className="absolute top-4 right-1/4 text-2xl opacity-25 select-none">✨</div>
+                    <div className="absolute bottom-6 left-1/4 text-3xl opacity-25 select-none">✨</div>
+
+                    <div className="relative max-w-4xl mx-auto text-center z-10">
+                        <div className="inline-flex items-center gap-2 bg-amber-500/30 backdrop-blur-sm border border-amber-300/40 text-amber-100 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide uppercase mb-4 shadow-sm">
+                            <span>🪔</span>
+                            <span>Diwali Special Festival Offer</span>
+                            <span>✨</span>
+                        </div>
+
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
+                            {sessionOffer.title}
+                        </h2>
+
+                        <p className="text-lg sm:text-xl text-orange-100 mt-4 max-w-2xl mx-auto font-medium leading-relaxed">
+                            {sessionOffer.message}
+                        </p>
+
+                        {sessionOffer.subtitle && (
+                            <p className="text-base sm:text-lg text-amber-200 font-bold mt-2">
+                                🌟 {sessionOffer.subtitle}
+                            </p>
+                        )}
+
+                        {sessionOffer.offerType === "coupon" && sessionOffer.couponCode ? (
+                            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                                <div className="flex items-center bg-white text-slate-900 rounded-2xl p-2 shadow-2xl border-2 border-amber-300">
+                                    <span className="font-mono text-2xl font-black px-5 py-2 tracking-widest text-red-600">
+                                        {sessionOffer.couponCode}
+                                    </span>
+                                    <button
+                                        onClick={() => handleCopyCode(sessionOffer.couponCode)}
+                                        className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold px-5 py-2.5 rounded-xl transition duration-200 text-sm shadow cursor-pointer active:scale-95"
+                                        aria-label="Copy coupon code"
+                                    >
+                                        {copied ? "✓ Copied!" : "Copy Code"}
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        document.getElementById("popular-foods")?.scrollIntoView({ behavior: "smooth" });
+                                    }}
+                                    className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-6 py-3 rounded-xl transition shadow text-base active:scale-95 cursor-pointer"
+                                >
+                                    Order Now 🍽️
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="mt-6">
+                                <span className="inline-block bg-white text-red-600 font-bold px-6 py-2.5 rounded-xl shadow text-lg">
+                                    {sessionOffer.discountType === "percentage"
+                                        ? `Flat ${sessionOffer.discountValue}% OFF Auto-Applied at Checkout`
+                                        : `Flat ₹${sessionOffer.discountValue} OFF Auto-Applied at Checkout`}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                </div>
-            </section>
+                </section>
+            ) : (
+                <section id="offer-banner" className="bg-gradient-to-r from-red-500 to-orange-500 text-white py-14 px-6 text-center shadow-md">
+                    <div className="max-w-7xl mx-auto">
+                        <h2 className="text-3xl sm:text-4xl font-bold">🔥 Special Savings Offer</h2>
+                        <p className="text-xl sm:text-2xl mt-4">Flat 30% OFF Above ₹999</p>
+                        <p className="mt-3 text-orange-100">Use Coupon Code</p>
+                        <div className="inline-block bg-white text-red-600 px-7 py-2.5 rounded-xl text-xl font-bold mt-3 shadow-lg">
+                            FOOD30
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* =========================
                 WHY CHOOSE US

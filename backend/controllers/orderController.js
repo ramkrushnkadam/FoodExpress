@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const Food = require("../models/Food");
+const Coupon = require("../models/Coupon");
+const { evaluateOrderDiscount } = require("../services/discountService");
 
 const ALLOWED_STATUSES = [
     "Pending",
@@ -27,7 +29,8 @@ const createOrder = async (req, res) => {
             orderType,
             paymentMethod,
             paymentStatus,
-            tableNumber
+            tableNumber,
+            couponCode
         } = req.body;
 
         // Basic validation
@@ -74,51 +77,29 @@ const createOrder = async (req, res) => {
             String(paymentStatus || "pending").toLowerCase()
         ] || "pending";
 
-        // Query MongoDB for all requested food items
-        const foodIds = requestedItems.map((item) => item.foodId).filter(Boolean);
-        if (foodIds.length !== requestedItems.length) {
-            return res.status(400).json({ message: "Each item must have a valid foodId" });
-        }
-
-        const foods = await Food.find({
-            _id: { $in: foodIds },
-            availability: true
-        }).populate({ path: "restaurant", match: { active: true } });
-
-        // Verify all food items exist and are available in active restaurants
-        if (foods.length !== requestedItems.length || foods.some((f) => !f.restaurant)) {
-            return res.status(400).json({ message: "One or more items in your order are unavailable" });
-        }
-
-        const foodsById = new Map(foods.map((food) => [String(food._id), food]));
-
-        // Calculate item prices and server total
-        const validatedItems = requestedItems.map((item) => {
-            const food = foodsById.get(String(item.foodId));
-            const quantity = Number(item.quantity);
-
-            if (!food || !Number.isInteger(quantity) || quantity < 1) {
-                throw new Error("Invalid quantity for food item");
-            }
-
-            return {
-                foodId: String(food._id),
-                name: food.name,
-                price: food.price, // Server price from MongoDB
-                quantity
-            };
+        // Evaluate items, prices, and authoritative discount server-side
+        const discountEvaluation = await evaluateOrderDiscount({
+            items: requestedItems,
+            couponCode: couponCode ? String(couponCode).trim() : ""
         });
 
-        const calculatedTotal = validatedItems.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-        );
+        // Increment coupon redemption count if a coupon was used
+        if (discountEvaluation.couponToRedeem) {
+            await Coupon.findByIdAndUpdate(discountEvaluation.couponToRedeem._id, {
+                $inc: { redemptionCount: 1 }
+            });
+        }
 
-        // Save order in MongoDB
+        // Save order in MongoDB with authoritative prices and discount snapshot
         const order = new Order({
             user: req.user.id,
-            items: validatedItems,
-            totalAmount: calculatedTotal,
+            items: discountEvaluation.validatedItems,
+            originalSubtotal: discountEvaluation.subtotal,
+            discountAmount: discountEvaluation.discountAmount,
+            discountType: discountEvaluation.discountType,
+            couponCode: discountEvaluation.couponCode,
+            sessionOfferTitle: discountEvaluation.sessionOfferTitle,
+            totalAmount: discountEvaluation.finalPayable,
             customerName: customerName.trim(),
             mobile: mobile.trim(),
             address: normalizedOrderType === "home_delivery" ? (address || "").trim() : "",

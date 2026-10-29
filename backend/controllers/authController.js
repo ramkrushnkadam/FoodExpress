@@ -1,3 +1,4 @@
+/* global require, process, module */
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");

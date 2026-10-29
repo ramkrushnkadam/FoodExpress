@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import { ADMIN_USER_KEY } from "../services/api";
@@ -225,7 +225,18 @@ export function AdminOrderDetails() {
                             <b>{money(item.price * item.quantity)}</b>
                         </div>
                     ))}
-                    <div className="mt-4 flex justify-between text-lg font-bold">
+                    {order.discountAmount > 0 && (
+                        <div className="mt-4 space-y-1 text-sm border-t pt-3">
+                            <div className="flex justify-between text-slate-500">
+                                <span>Subtotal</span><span>{money(order.originalSubtotal || (order.totalAmount + order.discountAmount))}</span>
+                            </div>
+                            <div className="flex justify-between text-emerald-600 font-semibold">
+                                <span>Discount ({order.couponCode ? `Coupon: ${order.couponCode}` : (order.sessionOfferTitle || "Offer")})</span>
+                                <span>-{money(order.discountAmount)}</span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="mt-4 flex justify-between text-lg font-bold border-t pt-3">
                         <span>Total</span><span>{money(order.totalAmount)}</span>
                     </div>
                 </div>
@@ -565,6 +576,920 @@ export function AdminSettings() {
                     <Field label="New password (leave blank to keep current)" name="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                     {message && <p className="text-sm text-emerald-700">{message}</p>}
                     <button className="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white">Save Changes</button>
+                </form>
+            </FormShell>
+        </section>
+    );
+}
+
+
+// ==========================================
+// COUPON MANAGEMENT
+// ==========================================
+
+const toInputDate = (d) => {
+    if (!d) return "";
+    const dt = new Date(d);
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+    return dt.toISOString().slice(0, 16);
+};
+
+const COUPON_STATUS_COLORS = {
+    active: "bg-emerald-100 text-emerald-800",
+    scheduled: "bg-blue-100 text-blue-800",
+    expired: "bg-red-100 text-red-800",
+    disabled: "bg-slate-100 text-slate-700",
+    limit_reached: "bg-amber-100 text-amber-800"
+};
+
+export function AdminCoupons() {
+    const [coupons, setCoupons] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [actionMsg, setActionMsg] = useState("");
+
+    const loadCoupons = useCallback(() => {
+        setLoading(true);
+        setError("");
+        const queryParams = new URLSearchParams();
+        if (search.trim()) queryParams.append("search", search.trim());
+        if (statusFilter && statusFilter !== "all") queryParams.append("status", statusFilter);
+
+        adminApi(`/coupons?${queryParams.toString()}`)
+            .then((data) => {
+                setCoupons(data.coupons || []);
+            })
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [search, statusFilter]);
+
+    useEffect(() => {
+        loadCoupons();
+    }, [loadCoupons]);
+
+    const handleToggle = async (coupon) => {
+        try {
+            const res = await adminApi(`/coupons/${coupon._id}/toggle`, { method: "PATCH" });
+            setActionMsg(res.message || "Status updated");
+            setTimeout(() => setActionMsg(""), 3000);
+            loadCoupons();
+        } catch (e) {
+            alert(e.message || "Failed to update status");
+        }
+    };
+
+    const handleDelete = async (coupon) => {
+        if (!window.confirm(`Are you sure you want to delete coupon "${coupon.code}"?`)) return;
+        try {
+            await adminApi(`/coupons/${coupon._id}`, { method: "DELETE" });
+            setActionMsg(`Coupon "${coupon.code}" deleted`);
+            setTimeout(() => setActionMsg(""), 3000);
+            loadCoupons();
+        } catch (e) {
+            alert(e.message || "Failed to delete coupon");
+        }
+    };
+
+    return (
+        <section>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-2xl font-bold">🏷️ Coupons Management</h2>
+                    <p className="text-slate-500">Create, monitor, and manage discount promo codes.</p>
+                </div>
+                <Link
+                    to="/admin/coupons/add"
+                    className="rounded-lg bg-orange-600 hover:bg-orange-700 px-4 py-2 font-semibold text-white shadow-sm transition"
+                >
+                    + Create Coupon
+                </Link>
+            </div>
+
+            {actionMsg && (
+                <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+                    ✓ {actionMsg}
+                </div>
+            )}
+            {error && <div className="mt-4"><ErrorBox error={error} /></div>}
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && loadCoupons()}
+                    placeholder="Search by code or description..."
+                    className="flex-1 min-w-[200px] rounded-lg border p-2.5 text-sm"
+                />
+                <button
+                    onClick={loadCoupons}
+                    className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+                >
+                    Search
+                </button>
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="rounded-lg border p-2.5 text-sm bg-white"
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="expired">Expired</option>
+                    <option value="disabled">Disabled</option>
+                    <option value="limit_reached">Limit Reached</option>
+                </select>
+            </div>
+
+            {loading ? (
+                <div className="mt-6"><Loading /></div>
+            ) : (
+                <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow-sm">
+                    <table className="w-full min-w-[850px] text-left text-sm">
+                        <thead className="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th className="p-3">Code</th>
+                                <th className="p-3">Discount</th>
+                                <th className="p-3">Min Order</th>
+                                <th className="p-3">Validity</th>
+                                <th className="p-3">Usage</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {coupons.length ? (
+                                coupons.map((c) => {
+                                    const statusKey = c.status || (c.isActive ? "active" : "disabled");
+                                    const badgeColor = COUPON_STATUS_COLORS[statusKey] || "bg-slate-100 text-slate-700";
+                                    return (
+                                        <tr key={c._id} className="border-t hover:bg-slate-50">
+                                            <td className="p-3">
+                                                <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                                                    {c.code}
+                                                </span>
+                                                {c.description && (
+                                                    <p className="text-xs text-slate-500 mt-1 max-w-xs truncate">{c.description}</p>
+                                                )}
+                                            </td>
+                                            <td className="p-3">
+                                                <b>
+                                                    {c.discountType === "percentage"
+                                                        ? `${c.discountValue}% OFF`
+                                                        : money(c.discountValue)}
+                                                </b>
+                                                {c.discountType === "percentage" && c.maxDiscount ? (
+                                                    <p className="text-xs text-slate-500">Cap: {money(c.maxDiscount)}</p>
+                                                ) : null}
+                                            </td>
+                                            <td className="p-3">{money(c.minSubtotal)}</td>
+                                            <td className="p-3 text-xs text-slate-600">
+                                                <span>{date(c.startDate)}</span>
+                                                <br />
+                                                <span className="text-slate-400">to</span> {date(c.endDate)}
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="font-semibold">{c.redemptionCount || 0}</span>
+                                                {c.usageLimit ? (
+                                                    <span className="text-slate-400"> / {c.usageLimit}</span>
+                                                ) : (
+                                                    <span className="text-slate-400"> (No limit)</span>
+                                                )}
+                                            </td>
+                                            <td className="p-3">
+                                                <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${badgeColor}`}>
+                                                    {statusKey.replace("_", " ").toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleToggle(c)}
+                                                        className={`text-xs px-2.5 py-1 rounded border font-medium ${
+                                                            c.isActive
+                                                                ? "border-amber-300 text-amber-700 hover:bg-amber-50"
+                                                                : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                                        }`}
+                                                    >
+                                                        {c.isActive ? "Disable" : "Enable"}
+                                                    </button>
+                                                    <Link
+                                                        to={`/admin/coupons/edit/${c._id}`}
+                                                        className="text-xs px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-medium hover:bg-slate-200"
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(c)}
+                                                        className="text-xs px-2.5 py-1 rounded bg-red-50 text-red-700 font-medium hover:bg-red-100"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="7" className="p-8 text-center text-slate-500">
+                                        No coupons found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </section>
+    );
+}
+
+export function CouponForm() {
+    const { id } = useParams();
+    const isEdit = Boolean(id);
+    const navigate = useNavigate();
+
+    const [loading, setLoading] = useState(isEdit);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+
+    const [form, setForm] = useState({
+        code: "",
+        description: "",
+        discountType: "percentage",
+        discountValue: 20,
+        minSubtotal: 0,
+        maxDiscount: "",
+        startDate: toInputDate(new Date()),
+        endDate: toInputDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        usageLimit: "",
+        isActive: true
+    });
+
+    useEffect(() => {
+        if (!isEdit) return;
+        setLoading(true);
+        adminApi(`/coupons/${id}`)
+            .then((data) => {
+                const c = data.coupon;
+                if (!c) throw new Error("Coupon not found");
+                setForm({
+                    code: c.code || "",
+                    description: c.description || "",
+                    discountType: c.discountType || "percentage",
+                    discountValue: c.discountValue ?? 0,
+                    minSubtotal: c.minSubtotal ?? 0,
+                    maxDiscount: c.maxDiscount ?? "",
+                    startDate: toInputDate(c.startDate),
+                    endDate: toInputDate(c.endDate),
+                    usageLimit: c.usageLimit ?? "",
+                    isActive: c.isActive !== false
+                });
+            })
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [id, isEdit]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSaving(true);
+
+        try {
+            const payload = {
+                code: form.code.trim().toUpperCase(),
+                description: form.description.trim(),
+                discountType: form.discountType,
+                discountValue: Number(form.discountValue),
+                minSubtotal: Number(form.minSubtotal) || 0,
+                maxDiscount: form.maxDiscount === "" ? null : Number(form.maxDiscount),
+                startDate: new Date(form.startDate).toISOString(),
+                endDate: new Date(form.endDate).toISOString(),
+                usageLimit: form.usageLimit === "" ? null : Number(form.usageLimit),
+                isActive: Boolean(form.isActive)
+            };
+
+            if (isEdit) {
+                await adminApi(`/coupons/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+            } else {
+                await adminApi("/coupons", { method: "POST", body: JSON.stringify(payload) });
+            }
+
+            navigate("/admin/coupons");
+        } catch (err) {
+            setError(err.message || "Failed to save coupon");
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <Loading />;
+
+    return (
+        <section>
+            <Link to="/admin/coupons" className="text-sm text-amber-700 hover:underline">
+                ← Back to Coupons
+            </Link>
+            <h2 className="mt-2 text-2xl font-bold">{isEdit ? "Edit Coupon" : "Create New Coupon"}</h2>
+            <p className="text-slate-500">Configure discount amounts, minimum order requirements, and validity dates.</p>
+
+            <FormShell error={error}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <Field
+                        label="Coupon Code"
+                        required
+                        placeholder="e.g. DIWALI20"
+                        value={form.code}
+                        onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                    />
+
+                    <div>
+                        <label className="text-sm font-medium">Description</label>
+                        <textarea
+                            rows={2}
+                            placeholder="e.g. Diwali Dhamaka 20% OFF above ₹499"
+                            value={form.description}
+                            onChange={(e) => setForm({ ...form, description: e.target.value })}
+                            className="mt-1 w-full rounded-lg border p-3 text-sm"
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="text-sm font-medium">Discount Type</label>
+                            <select
+                                value={form.discountType}
+                                onChange={(e) => setForm({ ...form, discountType: e.target.value })}
+                                className="mt-1 w-full rounded-lg border p-3 text-sm bg-white"
+                            >
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount (₹)</option>
+                            </select>
+                        </div>
+                        <Field
+                            label={form.discountType === "percentage" ? "Discount Value (%)" : "Discount Value (₹)"}
+                            type="number"
+                            required
+                            min={form.discountType === "percentage" ? 1 : 0}
+                            max={form.discountType === "percentage" ? 100 : undefined}
+                            step="any"
+                            value={form.discountValue}
+                            onChange={(e) => setForm({ ...form, discountValue: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field
+                            label="Minimum Subtotal (₹)"
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 499"
+                            value={form.minSubtotal}
+                            onChange={(e) => setForm({ ...form, minSubtotal: e.target.value })}
+                        />
+                        <Field
+                            label="Maximum Discount Cap (₹) (Optional)"
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 200 (for percentage)"
+                            value={form.maxDiscount}
+                            onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field
+                            label="Start Date & Time"
+                            type="datetime-local"
+                            required
+                            value={form.startDate}
+                            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                        />
+                        <Field
+                            label="End Date & Time"
+                            type="datetime-local"
+                            required
+                            value={form.endDate}
+                            onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                        />
+                    </div>
+
+                    <Field
+                        label="Usage Limit (Total allowed redemptions, leave blank for unlimited)"
+                        type="number"
+                        min="1"
+                        placeholder="e.g. 500"
+                        value={form.usageLimit}
+                        onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
+                    />
+
+                    <div className="pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer font-medium text-sm">
+                            <input
+                                type="checkbox"
+                                checked={form.isActive}
+                                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                                className="h-4 w-4 rounded text-orange-600"
+                            />
+                            Coupon is Active and Available for Customers
+                        </label>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                        >
+                            {saving ? "Saving..." : isEdit ? "Update Coupon" : "Create Coupon"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate("/admin/coupons")}
+                            className="rounded-lg border px-5 py-3 font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </FormShell>
+        </section>
+    );
+}
+
+// ==========================================
+// SESSION OFFERS & DIWALI BANNER MANAGEMENT
+// ==========================================
+
+export function AdminSessionOffers() {
+    const [offers, setOffers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [actionMsg, setActionMsg] = useState("");
+
+    const loadOffers = useCallback(() => {
+        setLoading(true);
+        setError("");
+        adminApi("/session-offers")
+            .then((data) => setOffers(data.offers || []))
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
+    }, []);
+
+    useEffect(() => {
+        loadOffers();
+    }, [loadOffers]);
+
+    const handleToggleStatus = async (offer) => {
+        try {
+            const res = await adminApi(`/session-offers/${offer._id}/toggle`, { method: "PATCH" });
+            setActionMsg(res.message || "Status updated");
+            setTimeout(() => setActionMsg(""), 3000);
+            loadOffers();
+        } catch (e) {
+            alert(e.message || "Failed to update status");
+        }
+    };
+
+    const handleToggleBanner = async (offer) => {
+        try {
+            const res = await adminApi(`/session-offers/${offer._id}/banner`, { method: "PATCH" });
+            setActionMsg(res.message || "Banner visibility updated");
+            setTimeout(() => setActionMsg(""), 3000);
+            loadOffers();
+        } catch (e) {
+            alert(e.message || "Failed to update banner visibility");
+        }
+    };
+
+    const handleDelete = async (offer) => {
+        if (!window.confirm(`Are you sure you want to delete session offer "${offer.title}"?`)) return;
+        try {
+            await adminApi(`/session-offers/${offer._id}`, { method: "DELETE" });
+            setActionMsg("Offer deleted");
+            setTimeout(() => setActionMsg(""), 3000);
+            loadOffers();
+        } catch (e) {
+            alert(e.message || "Failed to delete offer");
+        }
+    };
+
+    return (
+        <section>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-2xl font-bold">🪔 Session & Festival Offers</h2>
+                    <p className="text-slate-500">Manage Diwali promotional banners and scheduled session discounts.</p>
+                </div>
+                <Link
+                    to="/admin/session-offers/add"
+                    className="rounded-lg bg-orange-600 hover:bg-orange-700 px-4 py-2 font-semibold text-white shadow-sm transition"
+                >
+                    + Create Session Offer
+                </Link>
+            </div>
+
+            {actionMsg && (
+                <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+                    ✓ {actionMsg}
+                </div>
+            )}
+            {error && <div className="mt-4"><ErrorBox error={error} /></div>}
+
+            {loading ? (
+                <div className="mt-6"><Loading /></div>
+            ) : (
+                <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow-sm">
+                    <table className="w-full min-w-[850px] text-left text-sm">
+                        <thead className="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th className="p-3">Title & Message</th>
+                                <th className="p-3">Type</th>
+                                <th className="p-3">Discount Details</th>
+                                <th className="p-3">Validity</th>
+                                <th className="p-3">Home Banner</th>
+                                <th className="p-3">Active</th>
+                                <th className="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {offers.length ? (
+                                offers.map((o) => (
+                                    <tr key={o._id} className="border-t hover:bg-slate-50">
+                                        <td className="p-3 max-w-xs">
+                                            <b>{o.title}</b>
+                                            <p className="text-xs text-slate-500 mt-1 truncate">{o.message}</p>
+                                        </td>
+                                        <td className="p-3">
+                                            {o.offerType === "coupon" ? (
+                                                <span className="font-mono text-xs font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                                                    Coupon: {o.couponCode || "None"}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-bold bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                                    Direct Session
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="p-3">
+                                            <b>
+                                                {o.discountType === "percentage"
+                                                    ? `${o.discountValue}% OFF`
+                                                    : money(o.discountValue)}
+                                            </b>
+                                            {o.minSubtotal ? (
+                                                <p className="text-xs text-slate-500">Min: {money(o.minSubtotal)}</p>
+                                            ) : null}
+                                            {o.maxDiscount ? (
+                                                <p className="text-xs text-slate-500">Cap: {money(o.maxDiscount)}</p>
+                                            ) : null}
+                                        </td>
+                                        <td className="p-3 text-xs text-slate-600">
+                                            <span>{date(o.startDate)}</span>
+                                            <br />
+                                            <span className="text-slate-400">to</span> {date(o.endDate)}
+                                        </td>
+                                        <td className="p-3">
+                                            <button
+                                                onClick={() => handleToggleBanner(o)}
+                                                className={`text-xs px-2.5 py-1 rounded font-semibold ${
+                                                    o.showBanner
+                                                        ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                }`}
+                                            >
+                                                {o.showBanner ? "Visible ✓" : "Hidden ✕"}
+                                            </button>
+                                        </td>
+                                        <td className="p-3">
+                                            <button
+                                                onClick={() => handleToggleStatus(o)}
+                                                className={`text-xs px-2.5 py-1 rounded font-semibold ${
+                                                    o.isActive
+                                                        ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                                                        : "bg-red-100 text-red-800 hover:bg-red-200"
+                                                }`}
+                                            >
+                                                {o.isActive ? "Active" : "Disabled"}
+                                            </button>
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    to={`/admin/session-offers/edit/${o._id}`}
+                                                    className="text-xs px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-medium hover:bg-slate-200"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(o)}
+                                                    className="text-xs px-2.5 py-1 rounded bg-red-50 text-red-700 font-medium hover:bg-red-100"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="7" className="p-8 text-center text-slate-500">
+                                        No session offers found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </section>
+    );
+}
+
+export function SessionOfferForm() {
+    const { id } = useParams();
+    const isEdit = Boolean(id);
+    const navigate = useNavigate();
+
+    const [loading, setLoading] = useState(isEdit);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+    const [availableCoupons, setAvailableCoupons] = useState([]);
+
+    const [form, setForm] = useState({
+        title: "",
+        message: "",
+        subtitle: "",
+        offerType: "coupon",
+        couponCode: "DIWALI20",
+        discountType: "percentage",
+        discountValue: 20,
+        minSubtotal: 0,
+        maxDiscount: "",
+        startDate: toInputDate(new Date()),
+        endDate: toInputDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        showBanner: true,
+        isActive: true
+    });
+
+    useEffect(() => {
+        adminApi("/coupons")
+            .then((d) => setAvailableCoupons(d.coupons || []))
+            .catch(() => {});
+
+        if (!isEdit) return;
+        setLoading(true);
+        adminApi(`/session-offers/${id}`)
+            .then((data) => {
+                const o = data.offer;
+                if (!o) throw new Error("Session offer not found");
+                setForm({
+                    title: o.title || "",
+                    message: o.message || "",
+                    subtitle: o.subtitle || "",
+                    offerType: o.offerType || "coupon",
+                    couponCode: o.couponCode || "",
+                    discountType: o.discountType || "percentage",
+                    discountValue: o.discountValue ?? 0,
+                    minSubtotal: o.minSubtotal ?? 0,
+                    maxDiscount: o.maxDiscount ?? "",
+                    startDate: toInputDate(o.startDate),
+                    endDate: toInputDate(o.endDate),
+                    showBanner: o.showBanner !== false,
+                    isActive: o.isActive !== false
+                });
+            })
+            .catch((e) => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [id, isEdit]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSaving(true);
+
+        try {
+            const payload = {
+                title: form.title.trim(),
+                message: form.message.trim(),
+                subtitle: form.subtitle.trim(),
+                offerType: form.offerType,
+                couponCode: form.offerType === "coupon" ? form.couponCode.trim().toUpperCase() : "",
+                discountType: form.discountType,
+                discountValue: Number(form.discountValue),
+                minSubtotal: Number(form.minSubtotal) || 0,
+                maxDiscount: form.maxDiscount === "" ? null : Number(form.maxDiscount),
+                startDate: new Date(form.startDate).toISOString(),
+                endDate: new Date(form.endDate).toISOString(),
+                showBanner: Boolean(form.showBanner),
+                isActive: Boolean(form.isActive)
+            };
+
+            if (isEdit) {
+                await adminApi(`/session-offers/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+            } else {
+                await adminApi("/session-offers", { method: "POST", body: JSON.stringify(payload) });
+            }
+
+            navigate("/admin/session-offers");
+        } catch (err) {
+            setError(err.message || "Failed to save session offer");
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <Loading />;
+
+    return (
+        <section>
+            <Link to="/admin/session-offers" className="text-sm text-amber-700 hover:underline">
+                ← Back to Session Offers
+            </Link>
+            <h2 className="mt-2 text-2xl font-bold">{isEdit ? "Edit Session Offer" : "Create Session Offer"}</h2>
+            <p className="text-slate-500">Configure promotional festival offers and homepage banner settings.</p>
+
+            <FormShell error={error}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <Field
+                        label="Offer Title (e.g. 🪔 Diwali Dhamaka – Special Festival Offer)"
+                        required
+                        value={form.title}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    />
+
+                    <div>
+                        <label className="text-sm font-medium">Message / Promotional Description</label>
+                        <textarea
+                            rows={2}
+                            required
+                            placeholder="Celebrate Diwali with delicious food and exciting festive savings!"
+                            value={form.message}
+                            onChange={(e) => setForm({ ...form, message: e.target.value })}
+                            className="mt-1 w-full rounded-lg border p-3 text-sm"
+                        />
+                    </div>
+
+                    <Field
+                        label="Subtitle / Highlight Text (e.g. Flat 20% OFF on orders above ₹499)"
+                        placeholder="Flat 20% OFF on orders above ₹499 (Max ₹200)"
+                        value={form.subtitle}
+                        onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                    />
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="text-sm font-medium">Offer Type</label>
+                            <select
+                                value={form.offerType}
+                                onChange={(e) => setForm({ ...form, offerType: e.target.value })}
+                                className="mt-1 w-full rounded-lg border p-3 text-sm bg-white"
+                            >
+                                <option value="coupon">Coupon-Based (Prompts user to use coupon code)</option>
+                                <option value="direct">Direct Session Discount (Auto applied)</option>
+                            </select>
+                        </div>
+
+                        {form.offerType === "coupon" ? (
+                            <div>
+                                <label className="text-sm font-medium">Coupon Code</label>
+                                <div className="flex gap-2 mt-1">
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. DIWALI20"
+                                        value={form.couponCode}
+                                        onChange={(e) => setForm({ ...form, couponCode: e.target.value.toUpperCase() })}
+                                        className="w-full rounded-lg border p-3 text-sm"
+                                    />
+                                    {availableCoupons.length > 0 && (
+                                        <select
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    const c = availableCoupons.find((x) => x.code === e.target.value);
+                                                    if (c) {
+                                                        setForm({
+                                                            ...form,
+                                                            couponCode: c.code,
+                                                            discountType: c.discountType,
+                                                            discountValue: c.discountValue,
+                                                            minSubtotal: c.minSubtotal,
+                                                            maxDiscount: c.maxDiscount || ""
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                            className="rounded-lg border p-2 text-xs bg-slate-50"
+                                        >
+                                            <option value="">Quick Pick</option>
+                                            {availableCoupons.map((c) => (
+                                                <option key={c._id} value={c.code}>
+                                                    {c.code}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="text-sm font-medium">Discount Type</label>
+                            <select
+                                value={form.discountType}
+                                onChange={(e) => setForm({ ...form, discountType: e.target.value })}
+                                className="mt-1 w-full rounded-lg border p-3 text-sm bg-white"
+                            >
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount (₹)</option>
+                            </select>
+                        </div>
+                        <Field
+                            label={form.discountType === "percentage" ? "Discount Value (%)" : "Discount Value (₹)"}
+                            type="number"
+                            required
+                            min="0"
+                            max={form.discountType === "percentage" ? 100 : undefined}
+                            step="any"
+                            value={form.discountValue}
+                            onChange={(e) => setForm({ ...form, discountValue: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field
+                            label="Minimum Subtotal (₹)"
+                            type="number"
+                            min="0"
+                            value={form.minSubtotal}
+                            onChange={(e) => setForm({ ...form, minSubtotal: e.target.value })}
+                        />
+                        <Field
+                            label="Maximum Discount Cap (₹) (Optional)"
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 200"
+                            value={form.maxDiscount}
+                            onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field
+                            label="Start Date & Time"
+                            type="datetime-local"
+                            required
+                            value={form.startDate}
+                            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                        />
+                        <Field
+                            label="End Date & Time"
+                            type="datetime-local"
+                            required
+                            value={form.endDate}
+                            onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="space-y-2 pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer font-medium text-sm">
+                            <input
+                                type="checkbox"
+                                checked={form.showBanner}
+                                onChange={(e) => setForm({ ...form, showBanner: e.target.checked })}
+                                className="h-4 w-4 rounded text-orange-600"
+                            />
+                            Show Promotional Banner on Homepage
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer font-medium text-sm">
+                            <input
+                                type="checkbox"
+                                checked={form.isActive}
+                                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                                className="h-4 w-4 rounded text-orange-600"
+                            />
+                            Offer is Active
+                        </label>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                        >
+                            {saving ? "Saving..." : isEdit ? "Update Offer" : "Create Offer"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate("/admin/session-offers")}
+                            className="rounded-lg border px-5 py-3 font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                    </div>
                 </form>
             </FormShell>
         </section>

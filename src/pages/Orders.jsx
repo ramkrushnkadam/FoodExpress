@@ -461,6 +461,21 @@ function Orders() {
 
                                         {/* TOTAL */}
 
+                                        {order.discountAmount > 0 && (
+                                            <div className="mt-4 pt-3 border-t space-y-1 text-sm">
+                                                {order.originalSubtotal && (
+                                                    <div className="flex justify-between text-gray-500">
+                                                        <span>Subtotal</span>
+                                                        <span>₹{order.originalSubtotal}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between text-green-600 font-semibold">
+                                                    <span>Discount ({order.couponCode ? `Coupon: ${order.couponCode}` : (order.sessionOfferTitle || "Offer")})</span>
+                                                    <span>-₹{order.discountAmount}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="
                                             mt-6
                                             pt-5

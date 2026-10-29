@@ -11,6 +11,9 @@ const adminRoutes = require("./routes/adminRoutes");
 const catalogRoutes = require("./routes/catalogRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
+const couponRoutes = require("./routes/couponRoutes");
+const sessionOfferRoutes = require("./routes/sessionOfferRoutes");
+const seedInitialOffers = require("./services/seedOffers");
 
 const app = express();
 
@@ -27,7 +30,11 @@ const allowedOrigins = [
 // Connect MongoDB
 // ==========================================
 
-connectDB();
+connectDB().then(() => {
+    seedInitialOffers();
+}).catch((err) => {
+    console.error("DB Init error:", err);
+});
 
 // ==========================================
 // Security & Utility Middleware
@@ -102,6 +109,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api", catalogRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/coupons", couponRoutes);
+app.use("/api/session-offers", sessionOfferRoutes);
 
 // ==========================================
 // Test Route

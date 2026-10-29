@@ -27,6 +27,71 @@ function Checkout() {
     // Amount saved before clearing cart
     const [placedAmount, setPlacedAmount] = useState(0);
 
+    // Coupon states
+    const [couponInput, setCouponInput] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponLoading, setCouponLoading] = useState(false);
+    const [couponError, setCouponError] = useState("");
+
+    const discountAmount = appliedCoupon ? Number(appliedCoupon.discountAmount || 0) : 0;
+    const finalPayable = Math.max(0, Number(totalPrice) - discountAmount);
+
+    const applyCoupon = async (codeToApply) => {
+        const code = (typeof codeToApply === "string" ? codeToApply : couponInput).trim().toUpperCase();
+        if (!code) {
+            setCouponError("Please enter a coupon code");
+            return;
+        }
+        if (!cart || cart.length === 0) {
+            setCouponError("Your cart is empty");
+            return;
+        }
+
+        setCouponLoading(true);
+        setCouponError("");
+
+        try {
+            const items = cart.map((item) => {
+                const price = typeof item.price === "number"
+                    ? item.price
+                    : Number(String(item.price).replace(/[₹,]/g, "").trim());
+                return {
+                    foodId: String(item.id),
+                    name: item.name,
+                    price: Number(price),
+                    quantity: Number(item.quantity)
+                };
+            });
+
+            const res = await apiRequest("/coupons/validate", {
+                method: "POST",
+                body: JSON.stringify({ code, items })
+            });
+
+            if (res.valid) {
+                setAppliedCoupon(res);
+                setCouponInput(res.code);
+                setCouponError("");
+                showToast(`Coupon ${res.code} applied! Saved ₹${res.discountAmount}`, "success");
+            } else {
+                setAppliedCoupon(null);
+                setCouponError(res.message || "Invalid coupon code");
+            }
+        } catch (err) {
+            setAppliedCoupon(null);
+            setCouponError(err.message || "Failed to validate coupon");
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
+    const removeCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponInput("");
+        setCouponError("");
+        showToast("Coupon removed", "info");
+    };
+
     // Order type used by frontend
     // delivery / pickup / dine_in
     const [orderType, setOrderType] = useState("delivery");
@@ -255,7 +320,7 @@ function Checkout() {
             // SAVE TOTAL BEFORE CLEARING CART
             // -------------------------------------------------
 
-            const finalAmount = Number(totalPrice);
+            const finalAmount = Number(finalPayable);
 
             setPlacedAmount(finalAmount);
 
@@ -345,6 +410,8 @@ function Checkout() {
                 items: orderItems,
 
                 totalAmount: finalAmount,
+
+                couponCode: appliedCoupon ? appliedCoupon.code : undefined,
 
                 paymentMethod: "UPI",
 
@@ -1285,6 +1352,94 @@ function Checkout() {
 
                             </div>
 
+                            {/* =================================================
+                                HAVE A COUPON CODE?
+                            ================================================= */}
+                            <div className="mt-6 p-4 rounded-xl border border-orange-200 bg-orange-50/60 dark:bg-gray-800/80 dark:border-gray-700">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-lg">🏷️</span>
+                                    <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">Have a coupon code?</span>
+                                </div>
+
+                                {appliedCoupon ? (
+                                    <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 rounded-lg p-3 text-sm">
+                                        <div>
+                                            <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300 tracking-wider">
+                                                {appliedCoupon.code}
+                                            </span>
+                                            <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                                ✓ Applied! You saved ₹{appliedCoupon.discountAmount}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={removeCoupon}
+                                            className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline px-2 py-1 cursor-pointer"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. DIWALI20"
+                                                value={couponInput}
+                                                onChange={(e) => {
+                                                    setCouponInput(e.target.value.toUpperCase());
+                                                    if (couponError) setCouponError("");
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        applyCoupon();
+                                                    }
+                                                }}
+                                                className="flex-1 font-mono uppercase bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => applyCoupon()}
+                                                disabled={couponLoading || !couponInput.trim()}
+                                                className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {couponLoading ? "Checking..." : "Apply"}
+                                            </button>
+                                        </div>
+                                        {couponError && (
+                                            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                                ⚠ {couponError}
+                                            </p>
+                                        )}
+                                        <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 pt-1">
+                                            <span>Popular:</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCouponInput("DIWALI20");
+                                                    applyCoupon("DIWALI20");
+                                                }}
+                                                className="font-mono text-orange-600 hover:underline cursor-pointer"
+                                            >
+                                                DIWALI20
+                                            </button>
+                                            <span>•</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCouponInput("FOOD30");
+                                                    applyCoupon("FOOD30");
+                                                }}
+                                                className="font-mono text-orange-600 hover:underline cursor-pointer"
+                                            >
+                                                FOOD30
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* PLACE ORDER */}
 
                             <button
@@ -1302,7 +1457,7 @@ function Checkout() {
                                     transition
                                 "
                             >
-                                💳 Pay ₹{totalPrice} & Place Order
+                                💳 Pay ₹{finalPayable} & Place Order
                             </button>
 
                         </div>
@@ -1424,24 +1579,23 @@ function Checkout() {
                                         );
                                     })}
 
-                                    <div className="
-                                        flex
-                                        justify-between
-                                        pt-3
-                                        text-xl
-                                        font-bold
-                                    ">
+                                    <div className="border-t pt-3 space-y-2">
+                                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                                            <span>Subtotal</span>
+                                            <span>₹{totalPrice}</span>
+                                        </div>
 
-                                        <span>
-                                            Total
-                                        </span>
+                                        {appliedCoupon && (
+                                            <div className="flex justify-between text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <span>Discount ({appliedCoupon.code})</span>
+                                                <span>-₹{appliedCoupon.discountAmount}</span>
+                                            </div>
+                                        )}
 
-                                        <span className="
-                                            text-orange-500
-                                        ">
-                                            ₹{totalPrice}
-                                        </span>
-
+                                        <div className="flex justify-between pt-2 border-t text-xl font-bold">
+                                            <span>Total</span>
+                                            <span className="text-orange-500">₹{finalPayable}</span>
+                                        </div>
                                     </div>
 
                                 </div>
@@ -1552,7 +1706,7 @@ function Checkout() {
                                 font-bold
                                 text-orange-500
                             ">
-                                ₹{totalPrice}
+                                ₹{placedAmount || finalPayable}
                             </p>
 
                         </div>

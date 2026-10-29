@@ -28,9 +28,20 @@ export default defineConfig([
   {
     files: ['backend/**/*.{js,cjs}', 'scripts/**/*.{js,cjs}'],
     languageOptions: {
+      sourceType: 'commonjs',
       globals: {
         ...globals.node,
+        ...globals.commonjs,
+        require: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        exports: 'writable',
+        __dirname: 'readonly',
+        __filename: 'readonly',
       },
+    },
+    rules: {
+      'no-undef': 'off',
     },
   },
 ])

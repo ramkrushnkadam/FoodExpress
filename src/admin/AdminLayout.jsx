@@ -9,6 +9,8 @@ const links = [
     ["Customers", "/admin/customers", "♙"],
     ["Food Management", "/admin/food", "🍔"],
     ["Restaurants", "/admin/restaurants", "⌂"],
+    ["Coupons", "/admin/coupons", "🏷️"],
+    ["Session Offers", "/admin/session-offers", "🪔"],
     ["Reports", "/admin/reports", "▥"],
     ["Settings", "/admin/settings", "⚙"]
 ];

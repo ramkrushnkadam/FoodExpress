@@ -56,6 +56,33 @@ const orderSchema = new mongoose.Schema(
             required: true
         },
 
+        originalSubtotal: {
+            type: Number,
+            default: 0
+        },
+
+        discountAmount: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
+        discountType: {
+            type: String,
+            enum: ["percentage", "fixed", "none"],
+            default: "none"
+        },
+
+        couponCode: {
+            type: String,
+            default: ""
+        },
+
+        sessionOfferTitle: {
+            type: String,
+            default: ""
+        },
+
         customerName: {
             type: String,
             required: true
